@@ -45,6 +45,7 @@ conf['fmax'] = conf['sampling_rate'] // 2
 conf['n_mels'] = 128
 conf['n_fft'] = conf['n_mels'] * 20
 conf['audio_split'] = 'dont_crop'
+conf['learning_rate'] = 0.0001
 
 def auto_complete_conf(conf):
     conf['samples'] = conf['sampling_rate'] * conf['duration']
@@ -184,7 +185,7 @@ def audio_sample_to_X(conf, norm_audio):
         cur = s * conf['dims'][1]
         X.append(mels[:, cur:cur + conf['dims'][1]][..., np.newaxis])
     X = np.array(X)
-    X /= np.max(np.abs(X))   ########### REMOVE AFTER NEWLY TRAINED...
+    #X /= np.max(np.abs(X))   ########### REMOVE AFTER NEWLY TRAINED...
     samplewise_mean_X(X)
     return X
 

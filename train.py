@@ -28,7 +28,7 @@ for fold in range(conf['n_fold']):
     acc, acc_verified, history, model, _ = run_fold(conf, fold,
                 [X_train, y_train, idx_train],
                 model=None,
-                init_best_weights=False, # Set True if you continue from current best one
+                init_best_weights='model/mobilenetv2_fsd2018_41cls.h5', # False, # Set True if you continue from current best one
                 eval_only=False)
     work['history'].append(history)
     work['train_acc'].append(acc)
