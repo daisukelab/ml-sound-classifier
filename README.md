@@ -9,10 +9,10 @@ This is a simple, fast, for real-time use, customizable machine learning sound c
 - Normalizing samplewise for robustness to level drift.
 - Easy to customize example.
 
-This project is a spin-off from my solution for a competition Kaggle ["Freesound General-Purpose Audio Tagging Challenge"](https://www.kaggle.com/c/freesound-audio-tagging) to test in real environment.
+This project is a spin-off from my solution for a competition Kaggle ["Freesound General-Purpose Audio Tagging Challenge"](https://www.kaggle.com/c/freesound-audio-tagging) for trying in real environment.
 
-The competition have provided dataset as usual, then all the work have done for recorded samples.
-This project is developed as working code/exsample to predict in realtime.
+The competition itself have provided dataset as usual, then all the work have done for dataset's recorded samples.
+Unlike competition, this project is developed as working code/exsample to work in realtime.
 
 ## 1. Running examples
 
