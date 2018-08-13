@@ -135,7 +135,6 @@ def samplewise_mean_X(X):
     for i in range(len(X)):
         _mean, _std = np.mean(X[i]), np.std(X[i])
         X[i] -= _mean
-        #X[i] /= _std + np.max(X[i]) # 1.0 # Kind of Compressor effect
         X[i] /= _std + 1.0 # Kind of Compressor effect
 
 
@@ -185,13 +184,18 @@ def audio_sample_to_X(conf, norm_audio):
         cur = s * conf['dims'][1]
         X.append(mels[:, cur:cur + conf['dims'][1]][..., np.newaxis])
     X = np.array(X)
-    #X /= np.max(np.abs(X))   ########### REMOVE AFTER NEWLY TRAINED...
     samplewise_mean_X(X)
     return X
 
 def load_sample_as_X(conf, filename):
     norm_audio = read_audio(conf, filename)
     return audio_sample_to_X(conf, norm_audio)
+
+def geometric_mean_preds(_preds):
+    preds = _preds.copy()
+    for i in range(1, preds.shape[0]):
+        preds[0] = np.multiply(preds[0], preds[i])
+    return np.power(preds[0], 1/preds.shape[0])
 
 # # Tensorflow Utilities
 import tensorflow as tf
@@ -209,19 +213,27 @@ def load_graph(model_file):
 class KerasTFGraph:
     def __init__(self, model_pb_filename, input_name,
                  keras_learning_phase_name, output_name):
-        #self.model_pb_filename = model_pb_filename
         self.graph = load_graph(model_pb_filename)
-        #self.input_name = input_name
-        #self.keras_learning_phase_name = keras_learning_phase_name
-        #self.output_name = output_name
         self.layer_in = self.graph.get_operation_by_name(input_name)
         self.leayer_klp = self.graph.get_operation_by_name(keras_learning_phase_name)
         self.layer_out = self.graph.get_operation_by_name(output_name)
+        self.sess = tf.Session(graph=self.graph)
     def predict(self, X):
-        with tf.Session(graph=self.graph) as sess:
-            tf_preds = sess.run(self.layer_out.outputs[0], 
-                               {self.layer_in.outputs[0]: X,
-                                self.leayer_klp.outputs[0]: 0})
-        return tf_preds
+        preds = self.sess.run(self.layer_out.outputs[0], 
+                              {self.layer_in.outputs[0]: X,
+                               self.leayer_klp.outputs[0]: 0})
+        return preds
+    def close(self):
+        self.sess.close()
 
+
+# # Pyaudio Utilities
+import pyaudio
+
+def print_pyaudio_devices():
+    p = pyaudio.PyAudio()
+    count = p.get_device_count()
+    for i in range(count):
+        dev = p.get_device_info_by_index(i)
+        print (i, dev['name'], dev)
 
