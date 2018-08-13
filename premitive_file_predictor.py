@@ -1,7 +1,11 @@
-# Predict for a sound file
+# Predict from a sound file
+#
+# This is simplest premitive example to predict from a sound file.
+# Audio content will be just split and predict for each split portions.
+# No ensemble applied, sometimes weak to make predictions.
 #
 # Example:
-# $ CUDA_VISIBLE_DEVICES= python file_predictor.py sample/fireworks.wav
+# $ CUDA_VISIBLE_DEVICES= python premitive_file_predictor.py sample/fireworks.wav
 #
 
 from common import *
@@ -24,4 +28,4 @@ X = load_sample_as_X(conf, args.audio_file)
 preds = model.predict(X)
 for pred in preds:
     result = np.argmax(pred)
-    print(labels[result], result)
+    print(labels[result], pred[result])

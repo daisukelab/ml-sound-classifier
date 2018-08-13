@@ -6,7 +6,6 @@
 from common import *
 
 import pyaudio
-import wave
 import sys
 import time
 import array
@@ -36,9 +35,8 @@ conf['n_mels'] = 128
 conf['n_fft'] = conf['n_mels'] * 20
 conf['rt_process_count'] = 1
 conf['rt_oversamples'] = 10
-conf['rt_chunk_samples'] = conf['sampling_rate'] // conf['rt_oversamples']
 conf['pred_ensembles'] = 10
-conf['rt_power_threshold'] = -10000
+conf['rt_chunk_samples'] = conf['sampling_rate'] // conf['rt_oversamples']
 conf['audio_split'] = 'dont_crop'
 auto_complete_conf(conf)
 
@@ -52,9 +50,13 @@ def callback(in_data, frame_count, time_info, status):
     raw_frames.put(wave, True)
     return (None, pyaudio.paContinue)
 
+def on_predicted(ensembled_pred):
+    result = np.argmax(ensembled_pred)
+    print(labels[result], ensembled_pred[result])
+
 raw_audio_buffer = []
-pred_queue, power_queue = [deque(maxlen=conf['pred_ensembles']) for _ in range(2)]
-def main_process(model, pred_mean_fn=geometric_mean_preds):
+pred_queue = deque(maxlen=conf['pred_ensembles'])
+def main_process(model, on_predicted):
     # Pool audio data
     global raw_audio_buffer
     while not raw_frames.empty():
@@ -65,54 +67,49 @@ def main_process(model, pred_mean_fn=geometric_mean_preds):
     audio_to_convert = np.array(raw_audio_buffer[:mels_convert_samples]) / 32767
     raw_audio_buffer = raw_audio_buffer[mels_onestep_samples:]
     mels = audio_to_melspectrogram(conf, audio_to_convert)
+    # Predict, ensemble
     X = []
     for i in range(conf['rt_process_count']):
         cur = int(i * conf['dims'][1] / conf['rt_oversamples'])
         X.append(mels[:, cur:cur+conf['dims'][1], np.newaxis])
     X = np.array(X)
-    raw_powers = [np.sum(one_x) for one_x in X]
     samplewise_mean_X(X)
-    # Predict, ensemble
     raw_preds = model.predict(X)
-    for raw_pred, raw_power in zip(raw_preds, raw_powers):
-        #if raw_power < conf['rt_power_threshold']:
-        #    pred_queue.clear()
-        #    power_queue.clear()
-        #    continue
+    for raw_pred in raw_preds:
         pred_queue.append(raw_pred)
-        power_queue.append(raw_power)
-        ensembled_pred = pred_mean_fn(np.array([pred for pred in pred_queue]))
-        mean_power = np.mean(power_queue)
-        result = np.argmax(ensembled_pred)
-        print(labels[result], result, ensembled_pred[result], mean_power, raw_frames.qsize())
+        ensembled_pred = geometric_mean_preds(np.array([pred for pred in pred_queue]))
+        on_predicted(ensembled_pred)
 
 # # Main controller
-def process_file(model, filename):
+def process_file(model, filename, on_predicted=on_predicted):
     # Feed audio data as if it was recorded in realtime
     audio = read_audio(conf, filename) * 32767
     while len(audio) > conf['rt_chunk_samples']:
         raw_frames.put(audio[:conf['rt_chunk_samples']])
         audio = audio[conf['rt_chunk_samples']:]
-        main_process(model)
+        main_process(model, on_predicted)
 
 def my_exit(model):
     model.close()
     exit(0)
 
-if __name__ == '__main__':
-    model = KerasTFGraph(args.model_pb_graph,
+def get_model(graph_file):
+    return KerasTFGraph(graph_file,
         input_name='import/input_1',
         keras_learning_phase_name='import/bn_Conv1/keras_learning_phase',
         output_name='import/output0')
 
+if __name__ == '__main__':
+    model = get_model(args.model_pb_graph)
+    # file mode
     if args.input_file != '':
         process_file(model, args.input_file)
         my_exit(model)
-
+    # device list display mode
     if args.input < 0:
         print_pyaudio_devices()
         my_exit(model)
-
+    # normal: realtime mode
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     audio = pyaudio.PyAudio()
@@ -126,13 +123,10 @@ if __name__ == '__main__':
                 start=False,
                 stream_callback=callback # uncomment for non_blocking
             )
-
     # main loop
-    i = 0
     stream.start_stream()
     while stream.is_active():
-        main_process(model)
-        i += 1
+        main_process(model, on_predicted)
         time.sleep(0.001)
     stream.stop_stream()
     stream.close()
