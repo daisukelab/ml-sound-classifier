@@ -14,6 +14,10 @@ This project is a spin-off from my solution for a competition Kaggle ["Freesound
 The competition itself have provided dataset as usual, then all the work have done with dataset's static recorded samples.
 Unlike competition, this project is developed as working code/exsample to record live audio and classify in realtime.
 
+## Application Pull Requests/Reports are Welcome!
+
+If you implemented on your mobile app, or any embedded app like detecting sound of door open/close and make notification with Raspberry Pi, I really appreciate if you could let me know. Or you can pull-request your application, post as an issue here. You can also reach me via [twitter](https://twitter.com/nizumical).
+
 ## 1. Running Classifier
 
 ### Requirements
