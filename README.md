@@ -5,7 +5,7 @@ This is a simple, fast, for live audio in realtime, customizable machine learnin
 - MobileNetV2, light weight deep learning model, is trained by default.
 - Tensorflow graph for runtime fast prediction, and for portability.
 - Freesound Dataset Kaggle 2018 pre-built model is ready.
-- Ensembling sequence of predictions for stable results.
+- Ensembling sequence of predictions (moving average) for stable results.
 - Normalizing samplewise for robustness to level drift.
 - Easy to customize example.
 
