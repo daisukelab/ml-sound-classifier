@@ -1,5 +1,8 @@
 # Machine Learning Sound Classifier for Live Audio
 
+![title](title.jpg)
+(Picture on the left: [Rembrandt - Portrait of an Evangelist Writing, cited from Wikipedia](https://commons.wikimedia.org/wiki/File:Rembrandt_-_Portrait_of_an_Evangelist_Writing.jpg))
+
 This is a simple, fast, for live audio in realtime, customizable machine learning sound classifier.
 
 - MobileNetV2, light weight deep learning model, is trained by default.
