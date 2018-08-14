@@ -1,6 +1,6 @@
-# Machine Learning Sound Classifier
+# Machine Learning Sound Classifier for Live Audio
 
-This is a simple, fast, for real-time use, customizable machine learning sound classifier.
+This is a simple, fast, for live audio in realtime, customizable machine learning sound classifier.
 
 - MobileNetV2, light weight deep learning model, is trained by default.
 - Tensorflow graph for runtime fast prediction, and for portability.
@@ -11,23 +11,23 @@ This is a simple, fast, for real-time use, customizable machine learning sound c
 
 This project is a spin-off from my solution for a competition Kaggle ["Freesound General-Purpose Audio Tagging Challenge"](https://www.kaggle.com/c/freesound-audio-tagging) for trying in real environment.
 
-The competition itself have provided dataset as usual, then all the work have done for dataset's recorded samples.
-Unlike competition, this project is developed as working code/exsample to work in realtime.
+The competition itself have provided dataset as usual, then all the work have done with dataset's static recorded samples.
+Unlike competition, this project is developed as working code/exsample to record live audio and classify in realtime.
 
-## 1. Running examples
+## 1. Running Classifier
 
 ### Requirements
 
-- tensorflow
-- keras
+- Tensorflow
+- Keras
 - pyaudio
-- imbalance.learn (Training only)
+- imbalance.learn (For training only)
 - (some others, to be updated)
 
 ### Quick try
 
-Simply running `realtime_predictor.py` will start listening to the default audio input to predict. Following result is when typing keyboard on my desk.
-And you can see 'Bus' is following. It is easy to be detected with usual home environmental noise like sound of car running on the road neay by.
+Simply running `realtime_predictor.py` will start listening to the default audio input to predict. Following result is an example when typing computer keyboard on my laptop which was runnning this.
+You can see 'Bus' after many 'Computer_keyboard'. It appears many times with usual home environmental noise like sound of car running on the road neay by, so it is expected.
 
 ```
 $ python realtime_predictor.py 
@@ -73,7 +73,7 @@ Bus 22 0.35531467
 
 ## 2. Tuning example behaviors
 
-Followings are important 3 parameters that can be tuned to your environment.
+Followings are important 3 parameters that you can fine-tune program behavior in your environment.
 
 ```
 conf['rt_process_count'] = 1
@@ -92,7 +92,7 @@ Responce will be quicker with larger value as long as your environment is powerf
 This sets duration of audio conversion and following prediction. This set count(s) of audio capture, 1 means audio conversion and prediction happens with each audio capture. If it is 2, once of prediction per twice of audio captures.
 Responce will also be quicker if you set smaller like 1, but usually prediction takes time and you might need to set this bigger if it's not so powerful.
 
-MacBookPro 4 core CPU is OK with 1.
+On my MacBookPro with 4 core CPU, 1 is fine.
 
 ### `conf['pred_ensembles']`
 
@@ -104,7 +104,7 @@ For example, if `conf['pred_ensembles'] = 5`, past 4 predictions and present pre
 
 ## 3. Application concepts
 
-Following examples introduce possible impacts, when you apply this kind of predictor in your applications.
+Following examples introduce possible impacts when you apply this kind of classifier in your applications.
 
 ### App #1 iPhone recording sound example: Fireworks detection
 
