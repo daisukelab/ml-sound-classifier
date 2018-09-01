@@ -72,13 +72,21 @@ Bus 22 0.35531467
  :
  ```
 
-### Three example applications
+### Three example scripts for running classifier
 
 - realtime_predictor.py - This is basic example, predicts 41 classes provided by Freesound dataset.
 - deskwork_detector.py - This is customization example to predict 3 deskwork sounds only, uses Emoji to express prediction probabilities.
 - premitive_file_predictor.py - This is very simple example. No prediction ensemble is used, predict from file only.
 
-## 2. Tuning example behaviors
+## 2. Applications as training examples
+
+[Example Applications](EXAMPLE_APPS.md) provides examples for some datasets.
+
+These are also examples of training each datasets.
+
+Check [EXAMPLE_APPS.md](EXAMPLE_APPS.md) when you try to train model for your datasets.
+
+## 3. Tuning example behaviors
 
 Followings are important 3 parameters that you can fine-tune program behavior in your environment.
 
@@ -109,7 +117,7 @@ Ensemble is done by calclating geometric mean of all the predictions in the fifo
 
 For example, if `conf['pred_ensembles'] = 5`, past 4 predictions and present prediction will be used for calculating present ensemble prediction result.
 
-## 3. Application concepts
+## 4. Possible future applications
 
 Following examples introduce possible impacts when you apply this kind of classifier in your applications.
 
@@ -236,4 +244,4 @@ Using TensorFlow backend.
 
 ## Future works
 
-- Example: Training your dataset
+- Documenting some more detail of training your dataset
