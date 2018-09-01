@@ -28,4 +28,4 @@ X = load_sample_as_X(conf, args.audio_file)
 preds = model.predict(X)
 for pred in preds:
     result = np.argmax(pred)
-    print(labels[result], pred[result])
+    print(conf.labels[result], pred[result])

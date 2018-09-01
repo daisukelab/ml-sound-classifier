@@ -10,7 +10,6 @@
 #
 
 # # Basic definitions
-# Warning suppression
 import warnings
 warnings.simplefilter('ignore')
 import numpy as np
@@ -22,36 +21,33 @@ import shutil
 from pathlib import Path
 import pandas as pd
 
-# # Common Configration
-# Labels and integer converter
-labels = ['Hi-hat', 'Saxophone', 'Trumpet', 'Glockenspiel', 'Cello', 'Knock',
-       'Gunshot_or_gunfire', 'Clarinet', 'Computer_keyboard',
-       'Keys_jangling', 'Snare_drum', 'Writing', 'Laughter', 'Tearing',
-       'Fart', 'Oboe', 'Flute', 'Cough', 'Telephone', 'Bark', 'Chime',
-       'Bass_drum', 'Bus', 'Squeak', 'Scissors', 'Harmonica', 'Gong',
-       'Microwave_oven', 'Burping_or_eructation', 'Double_bass', 'Shatter',
-       'Fireworks', 'Tambourine', 'Cowbell', 'Electric_piano', 'Meow',
-       'Drawer_open_or_close', 'Applause', 'Acoustic_guitar',
-       'Violin_or_fiddle', 'Finger_snapping']
-label2int = {l:i for i, l in enumerate(labels)}
-num_classes = len(labels)
-
-conf={}
-conf['sampling_rate'] = 44100
-conf['duration'] = 1
-conf['hop_length'] = 347 # to make time steps 128
-conf['fmin'] = 20
-conf['fmax'] = conf['sampling_rate'] // 2
-conf['n_mels'] = 128
-conf['n_fft'] = conf['n_mels'] * 20
-conf['audio_split'] = 'dont_crop'
-conf['learning_rate'] = 0.0001
-
+# # Configration
 def auto_complete_conf(conf):
-    conf['samples'] = conf['sampling_rate'] * conf['duration']
-    conf['dims'] = (conf['n_mels'], 1 + int(np.floor(conf['samples']/conf['hop_length'])), 1)
+    conf.folder = Path(conf.folder)
+    conf.label2int = {l:i for i, l in enumerate(conf.labels)}
+    conf.num_classes = len(conf.labels)
+    conf.samples = conf.sampling_rate * conf.duration
+    conf.dims = (conf.n_mels, 1 + int(np.floor(conf.samples/conf.hop_length)), 1)
 
+from config import *
 auto_complete_conf(conf)
+
+# # Data utilities
+def load_labels(conf):
+    conf.labels = loaddata(conf, 'labels.npy')
+    auto_complete_conf(conf)
+    print('Labels are', conf.labels)
+
+def datapath(conf, filename):
+    return conf.folder / filename
+
+def loaddata(conf, filename):
+    return np.load(conf.folder / filename)
+
+def load_dataset(X_file, y_file, idx_file):
+    return loaddata(conf, X_file), \
+        keras.utils.to_categorical(loaddata(conf, y_file)), \
+        loaddata(conf, idx_file)
 
 # # Model
 import keras
@@ -69,41 +65,51 @@ def model_mobilenetv2(input_shape, num_classes):
     model = Model(inputs=base_model.input, outputs=predictions)
     return model
 
-def create_model(conf, num_classes):
-    model = model_mobilenetv2(input_shape=conf['dims'], num_classes=num_classes)
+def create_model(conf, num_classes, weights=None):
+    model = model_mobilenetv2(input_shape=conf.dims, num_classes=num_classes)
     model.compile(loss='categorical_crossentropy',
-              optimizer=keras.optimizers.Adam(lr=conf['learning_rate']),
+              optimizer=keras.optimizers.Adam(lr=conf.learning_rate),
               metrics=['accuracy'])
+    if weights is not None:
+        print('Loading weights:', weights)
+        model.load_weights(weights, by_name=True, skip_mismatch=True)
     model.summary()
     return model
+
+def freeze_model_layers(model, trainable_after_this=''):
+    trainable = False
+    for layer in model.layers:
+        if layer.name == trainable_after_this:
+            trainable = True
+        layer.trainable = trainable
 
 # # Audio Utilities
 import librosa
 import librosa.display
 
 def read_audio(conf, pathname):
-    y, sr = librosa.load(pathname, sr=conf['sampling_rate'])
+    y, sr = librosa.load(pathname, sr=conf.sampling_rate)
     # trim silence
     if 0 < len(y): # workaround: 0 length causes error
         y, _ = librosa.effects.trim(y) # trim, top_db=default(60)
     # make it unified length to conf.samples
-    if len(y) > conf['samples']: # long enough
-        if conf['audio_split'] == 'head':
-            y = y[0:0+conf['samples']]
+    if len(y) > conf.samples: # long enough
+        if conf.audio_split == 'head':
+            y = y[0:0+conf.samples]
     else: # pad blank
-        padding = conf['samples'] - len(y)    # add padding at both ends
+        padding = conf.samples - len(y)    # add padding at both ends
         offset = padding // 2
-        y = np.pad(y, (offset, conf['samples'] - len(y) - offset), 'constant')
+        y = np.pad(y, (offset, conf.samples - len(y) - offset), 'constant')
     return y
 
 def audio_to_melspectrogram(conf, audio):
     spectrogram = librosa.feature.melspectrogram(audio, 
-                                                 sr=conf['sampling_rate'],
-                                                 n_mels=conf['n_mels'],
-                                                 hop_length=conf['hop_length'],
-                                                 n_fft=conf['n_fft'],
-                                                 fmin=conf['fmin'],
-                                                 fmax=conf['fmax'])
+                                                 sr=conf.sampling_rate,
+                                                 n_mels=conf.n_mels,
+                                                 hop_length=conf.hop_length,
+                                                 n_fft=conf.n_fft,
+                                                 fmin=conf.fmin,
+                                                 fmax=conf.fmax)
     spectrogram = librosa.power_to_db(spectrogram)
     spectrogram = spectrogram.astype(np.float32)
     return spectrogram
@@ -116,8 +122,8 @@ def show_melspectrogram(conf, mels):
     matplotlib.style.use('ggplot')
 
     librosa.display.specshow(mels, x_axis='time', y_axis='mel', 
-                             sr=conf['sampling_rate'], hop_length=conf['hop_length'],
-                            fmin=conf['fmin'], fmax=conf['fmax'])
+                             sr=conf.sampling_rate, hop_length=conf.hop_length,
+                            fmin=conf.fmin, fmax=conf.fmax)
     plt.colorbar(format='%+2.0f dB')
     plt.title('Log-frequency power spectrogram')
     plt.show()
@@ -126,7 +132,7 @@ def read_as_melspectrogram(conf, pathname, debug_display=False):
     x = read_audio(conf, pathname)
     mels = audio_to_melspectrogram(conf, x)
     if debug_display:
-        IPython.display.display(IPython.display.Audio(x, rate=conf['sampling_rate']))
+        IPython.display.display(IPython.display.Audio(x, rate=conf.sampling_rate))
         show_melspectrogram(conf, mels)
     return mels
 
@@ -137,14 +143,13 @@ def samplewise_mean_X(X):
         X[i] -= _mean
         X[i] /= _std + 1.0 # Kind of Compressor effect
 
-
 def split_long_data(conf, X):
     # Splits long mel-spectrogram data with small overlap
     L = X.shape[1]
-    one_length = conf['dims'][1]
+    one_length = conf.dims[1]
     loop_length = int(one_length * 0.9)
     min_length = int(one_length * 0.2)
-    print(' sample length', L, 'to cut every', one_length)
+    print(' sample length', L, 'to split by', one_length)
     for idx in range(L // loop_length):
         cur = loop_length * idx
         rest = L - cur
@@ -156,7 +161,7 @@ def split_long_data(conf, X):
 
 def convert_X(fnames, conf, datapath):
     """Convert all files listed on fnames and generates training set.
-    Long samples are split into pieces by conf['samples'].
+    Long samples are split into pieces by conf.samples.
     
     :param fnames: list of filenames
     :param conf: configurations
@@ -180,9 +185,9 @@ def mels_len(mels): return mels.shape[1]
 def audio_sample_to_X(conf, norm_audio):
     mels = audio_to_melspectrogram(conf, norm_audio)
     X = []
-    for s in range(0, mels_len(mels) // conf['dims'][1]):
-        cur = s * conf['dims'][1]
-        X.append(mels[:, cur:cur + conf['dims'][1]][..., np.newaxis])
+    for s in range(0, mels_len(mels) // conf.dims[1]):
+        cur = s * conf.dims[1]
+        X.append(mels[:, cur:cur + conf.dims[1]][..., np.newaxis])
     X = np.array(X)
     samplewise_mean_X(X)
     return X

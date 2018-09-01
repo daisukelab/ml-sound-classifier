@@ -25,23 +25,22 @@ parser.add_argument('--model-pb-graph', '-m', default='model/sample_model.pb', t
                     help='Feed model you want to run.')
 args = parser.parse_args()
 
-conf={}
-conf['sampling_rate'] = 44100
-conf['duration'] = 1
-conf['hop_length'] = 347 # to make time steps 128
-conf['fmin'] = 20
-conf['fmax'] = conf['sampling_rate'] // 2
-conf['n_mels'] = 128
-conf['n_fft'] = conf['n_mels'] * 20
-conf['rt_process_count'] = 1
-conf['rt_oversamples'] = 10
-conf['pred_ensembles'] = 10
-conf['rt_chunk_samples'] = conf['sampling_rate'] // conf['rt_oversamples']
-conf['audio_split'] = 'dont_crop'
+conf.sampling_rate = 44100
+conf.duration = 1
+conf.hop_length = 347 # to make time steps 128
+conf.fmin = 20
+conf.fmax = conf.sampling_rate // 2
+conf.n_mels = 128
+conf.n_fft = conf.n_mels * 20
+conf.rt_process_count = 1
+conf.rt_oversamples = 10
+conf.pred_ensembles = 10
+conf.rt_chunk_samples = conf.sampling_rate // conf.rt_oversamples
+conf.audio_split = 'dont_crop'
 auto_complete_conf(conf)
 
-mels_onestep_samples = conf['rt_chunk_samples'] * conf['rt_process_count']
-mels_convert_samples = conf['samples'] + mels_onestep_samples
+mels_onestep_samples = conf.rt_chunk_samples * conf.rt_process_count
+mels_convert_samples = conf.samples + mels_onestep_samples
 
 # # Capture & pridiction jobs
 raw_frames = queue.Queue(maxsize=100)
@@ -52,10 +51,10 @@ def callback(in_data, frame_count, time_info, status):
 
 def on_predicted(ensembled_pred):
     result = np.argmax(ensembled_pred)
-    print(labels[result], ensembled_pred[result])
+    print(conf.labels[result], ensembled_pred[result])
 
 raw_audio_buffer = []
-pred_queue = deque(maxlen=conf['pred_ensembles'])
+pred_queue = deque(maxlen=conf.pred_ensembles)
 def main_process(model, on_predicted):
     # Pool audio data
     global raw_audio_buffer
@@ -69,9 +68,9 @@ def main_process(model, on_predicted):
     mels = audio_to_melspectrogram(conf, audio_to_convert)
     # Predict, ensemble
     X = []
-    for i in range(conf['rt_process_count']):
-        cur = int(i * conf['dims'][1] / conf['rt_oversamples'])
-        X.append(mels[:, cur:cur+conf['dims'][1], np.newaxis])
+    for i in range(conf.rt_process_count):
+        cur = int(i * conf.dims[1] / conf.rt_oversamples)
+        X.append(mels[:, cur:cur+conf.dims[1], np.newaxis])
     X = np.array(X)
     samplewise_mean_X(X)
     raw_preds = model.predict(X)
@@ -84,9 +83,9 @@ def main_process(model, on_predicted):
 def process_file(model, filename, on_predicted=on_predicted):
     # Feed audio data as if it was recorded in realtime
     audio = read_audio(conf, filename) * 32767
-    while len(audio) > conf['rt_chunk_samples']:
-        raw_frames.put(audio[:conf['rt_chunk_samples']])
-        audio = audio[conf['rt_chunk_samples']:]
+    while len(audio) > conf.rt_chunk_samples:
+        raw_frames.put(audio[:conf.rt_chunk_samples])
+        audio = audio[conf.rt_chunk_samples:]
         main_process(model, on_predicted)
 
 def my_exit(model):
@@ -116,10 +115,10 @@ if __name__ == '__main__':
     stream = audio.open(
                 format=FORMAT,
                 channels=CHANNELS,
-                rate=conf['sampling_rate'],
+                rate=conf.sampling_rate,
                 input=True,
                 input_device_index=args.input,
-                frames_per_buffer=conf['rt_chunk_samples'],
+                frames_per_buffer=conf.rt_chunk_samples,
                 start=False,
                 stream_callback=callback # uncomment for non_blocking
             )

@@ -5,7 +5,7 @@ emoji = {'Writing': '\U0001F4DD ', 'Scissors': '\u2701 ',
 
 def on_predicted_deskwork(ensembled_pred):
     result = np.argmax(ensembled_pred)
-    label = labels[result]
+    label = conf.labels[result]
     if label in ['Writing', 'Scissors', 'Computer_keyboard']:
         p = ensembled_pred[result]
         level = int(p*10) + 1
@@ -28,10 +28,10 @@ if __name__ == '__main__':
     stream = audio.open(
                 format=FORMAT,
                 channels=CHANNELS,
-                rate=conf['sampling_rate'],
+                rate=conf.sampling_rate,
                 input=True,
                 input_device_index=args.input,
-                frames_per_buffer=conf['rt_chunk_samples'],
+                frames_per_buffer=conf.rt_chunk_samples,
                 start=False,
                 stream_callback=callback # uncomment for non_blocking
             )
