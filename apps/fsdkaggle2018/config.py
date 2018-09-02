@@ -43,4 +43,4 @@ conf.best_weight_file = 'best_model_weight.h5'
 conf.rt_process_count = 1
 conf.rt_oversamples = 10
 conf.pred_ensembles = 10
-conf.runtime_model_file = 'model/sample_model.pb'
+conf.runtime_model_file = 'model/mobilenetv2_fsd2018_41cls.pb'

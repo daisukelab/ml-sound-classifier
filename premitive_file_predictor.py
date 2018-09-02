@@ -14,7 +14,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Run sound classifier')
 parser.add_argument('audio_file', type=str,
                     help='audio file to predict.')
-parser.add_argument('--model-pb-graph', '-m', default='model/sample_model.pb', type=str,
+parser.add_argument('--model-pb-graph', '-pb', default='model/mobilenetv2_fsd2018_41cls.pb', type=str,
                     help='Feed model you want to run')
 args = parser.parse_args()
 

@@ -89,7 +89,18 @@ And `cnn-laser-machine-listener` is an end to end example to showcase training, 
 
 Check [Example Applications](EXAMPLE_APPS.md) when you try to train model for your datasets.
 
-## 3. Tuning example behaviors
+## 3. Pretrained models
+
+Following pretrained models are provided. 44.1kHz model is for high quality sound classification, and 16kHz model is for general purpose sounds.
+
+| File name                          | Dataset       | Audio input |
+|------------------------------------|---------------|-------------|
+| mobilenetv2_fsd2018_41cls.h5       | FSDKaggle2018 | 44.1kHz, 128 n_mels, 128 time hop |
+| mobilenetv2_small_fsd2018_41cls.h5 | FSDKaggle2018 | 16kHz, 64 n_mels, 64 time hop |
+
+About 9,000 samples from FSDKaggle2018 are used for training. It means these models doesn't have generalization property like ones we can expect with ImageNet image classifier models.
+
+## 4. Tuning example behaviors
 
 Followings are important 3 parameters that you can fine-tune program behavior in your environment.
 
@@ -120,7 +131,7 @@ Ensemble is done by calclating geometric mean of all the predictions in the fifo
 
 For example, if `conf.pred_ensembles = 5`, past 4 predictions and present prediction will be used for calculating present ensemble prediction result.
 
-## 4. Possible future applications
+## 5. Possible future applications
 
 Following examples introduce possible impacts when you apply this kind of classifier in your applications.
 
