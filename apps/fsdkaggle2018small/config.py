@@ -38,3 +38,9 @@ conf.learning_rate = 0.0001
 conf.epochs = 500
 conf.verbose = 2
 conf.best_weight_file = 'best_model_weight.h5'
+
+# Runtime conficurations
+conf.rt_process_count = 1
+conf.rt_oversamples = 10
+conf.pred_ensembles = 10
+conf.runtime_model_file = 'please make yourself' ### NOT PROVIDED

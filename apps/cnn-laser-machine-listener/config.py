@@ -19,7 +19,7 @@ conf.audio_split = 'dont_crop'
 conf.labels = ['background', 'cutting_in_focus', 'cutting_not_in_focus',
                'marking', 'sleeping', 'waiting']
 
-# Training Configurations
+# Training configurations
 conf.folder = '.'
 conf.n_fold = 1
 conf.normalize = 'samplewise'
@@ -31,3 +31,9 @@ conf.learning_rate = 0.0001
 conf.epochs = 50
 conf.verbose = 2
 conf.best_weight_file = 'best_model_weight.h5'
+
+# Runtime conficurations
+conf.rt_process_count = 1
+conf.rt_oversamples = 10
+conf.pred_ensembles = 10
+conf.runtime_model_file = 'cnn-model-laser-machine-listener.pb'

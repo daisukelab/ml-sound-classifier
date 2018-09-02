@@ -21,26 +21,9 @@ parser.add_argument('--input-file', '-f', default='', type=str,
                     help='If set, predict this audio file.')
 #parser.add_argument('--save_file', default='recorded.wav', type=str,
 #                    help='File to save samples captured while running.')
-parser.add_argument('--model-pb-graph', '-m', default='model/sample_model.pb', type=str,
-                    help='Feed model you want to run.')
+parser.add_argument('--model-pb-graph', '-pb', default='', type=str,
+                    help='Feed model you want to run, or conf.runtime_weight_file will be used.')
 args = parser.parse_args()
-
-conf.sampling_rate = 44100
-conf.duration = 1
-conf.hop_length = 347 # to make time steps 128
-conf.fmin = 20
-conf.fmax = conf.sampling_rate // 2
-conf.n_mels = 128
-conf.n_fft = conf.n_mels * 20
-conf.rt_process_count = 1
-conf.rt_oversamples = 10
-conf.pred_ensembles = 10
-conf.rt_chunk_samples = conf.sampling_rate // conf.rt_oversamples
-conf.audio_split = 'dont_crop'
-auto_complete_conf(conf)
-
-mels_onestep_samples = conf.rt_chunk_samples * conf.rt_process_count
-mels_convert_samples = conf.samples + mels_onestep_samples
 
 # # Capture & pridiction jobs
 raw_frames = queue.Queue(maxsize=100)
@@ -60,11 +43,11 @@ def main_process(model, on_predicted):
     global raw_audio_buffer
     while not raw_frames.empty():
         raw_audio_buffer.extend(raw_frames.get())
-        if len(raw_audio_buffer) >= mels_convert_samples: break
-    if len(raw_audio_buffer) < mels_convert_samples: return
+        if len(raw_audio_buffer) >= conf.mels_convert_samples: break
+    if len(raw_audio_buffer) < conf.mels_convert_samples: return
     # Convert to log mel-spectrogram
-    audio_to_convert = np.array(raw_audio_buffer[:mels_convert_samples]) / 32767
-    raw_audio_buffer = raw_audio_buffer[mels_onestep_samples:]
+    audio_to_convert = np.array(raw_audio_buffer[:conf.mels_convert_samples]) / 32767
+    raw_audio_buffer = raw_audio_buffer[conf.mels_onestep_samples:]
     mels = audio_to_melspectrogram(conf, audio_to_convert)
     # Predict, ensemble
     X = []
@@ -93,12 +76,13 @@ def my_exit(model):
     exit(0)
 
 def get_model(graph_file):
-    return KerasTFGraph(graph_file,
+    return KerasTFGraph(
+        conf.runtime_model_file if graph_file == '' else graph_file,
         input_name='import/input_1',
         keras_learning_phase_name='import/bn_Conv1/keras_learning_phase',
         output_name='import/output0')
 
-if __name__ == '__main__':
+def run_predictor():
     model = get_model(args.model_pb_graph)
     # file mode
     if args.input_file != '':
@@ -133,4 +117,5 @@ if __name__ == '__main__':
     audio.terminate()
     my_exit(model)
 
-
+if __name__ == '__main__':
+    run_predictor()

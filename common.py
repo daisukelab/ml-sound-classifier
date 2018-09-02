@@ -27,6 +27,9 @@ def auto_complete_conf(conf):
     conf.label2int = {l:i for i, l in enumerate(conf.labels)}
     conf.num_classes = len(conf.labels)
     conf.samples = conf.sampling_rate * conf.duration
+    conf.rt_chunk_samples = conf.sampling_rate // conf.rt_oversamples
+    conf.mels_onestep_samples = conf.rt_chunk_samples * conf.rt_process_count
+    conf.mels_convert_samples = conf.samples + conf.mels_onestep_samples
     conf.dims = (conf.n_mels, 1 + int(np.floor(conf.samples/conf.hop_length)), 1)
 
 from config import *

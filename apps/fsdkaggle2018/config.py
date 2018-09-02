@@ -26,7 +26,7 @@ conf.labels = ['Hi-hat', 'Saxophone', 'Trumpet', 'Glockenspiel', 'Cello', 'Knock
        'Drawer_open_or_close', 'Applause', 'Acoustic_guitar',
        'Violin_or_fiddle', 'Finger_snapping']
 
-# Training Configurations
+# Training configurations
 conf.folder = '.'
 conf.n_fold = 1
 conf.normalize = 'samplewise'
@@ -38,3 +38,9 @@ conf.learning_rate = 0.0001
 conf.epochs = 500
 conf.verbose = 2
 conf.best_weight_file = 'best_model_weight.h5'
+
+# Runtime conficurations
+conf.rt_process_count = 1
+conf.rt_oversamples = 10
+conf.pred_ensembles = 10
+conf.runtime_model_file = 'model/sample_model.pb'

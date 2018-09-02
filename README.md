@@ -25,10 +25,13 @@ If you implemented on your mobile app, or any embedded app like detecting sound 
 
 ### Requirements
 
-- Tensorflow
-- Keras
-- pyaudio
-- imbalance.learn (For training only)
+- Python 3.6.
+- Tensorflow, tested with 1.9.
+- Keras, tested with 2.2.0.
+- LibROSA, tested with 0.6.0.
+- PyAudio, tested with 0.2.11.
+- EasyDict, tested with 1.4.
+- imbalance.learn (For training only), tested with 0.3.3.
 - (some others, to be updated)
 
 ### Quick try
@@ -80,42 +83,42 @@ Bus 22 0.35531467
 
 ## 2. Applications as training examples
 
-[Example Applications](EXAMPLE_APPS.md) provides examples for some datasets.
+[Example Applications](EXAMPLE_APPS.md) are provided as examples for some datasets. These explains how to train models.
 
-These are also examples of training each datasets.
+And `cnn-laser-machine-listener` is an end to end example to showcase training, converting model to .pb and use it for prediction in realtime.
 
-Check [EXAMPLE_APPS.md](EXAMPLE_APPS.md) when you try to train model for your datasets.
+Check [Example Applications](EXAMPLE_APPS.md) when you try to train model for your datasets.
 
 ## 3. Tuning example behaviors
 
 Followings are important 3 parameters that you can fine-tune program behavior in your environment.
 
 ```
-conf['rt_process_count'] = 1
-conf['rt_oversamples'] = 10
-conf['pred_ensembles'] = 10
+conf.rt_process_count = 1
+conf.rt_oversamples = 10
+conf.pred_ensembles = 10
 ```
 
-### `conf['rt_oversamples']`
+### `conf.rt_oversamples`
 
 This sets how many times raw audio capture will happen.
 If this is 10, it happens 10 times per one second.
 Responce will be quicker with larger value as long as your environment is powerful enough.
 
-### `conf['rt_process_count']`
+### `conf.rt_process_count`
 
 This sets duration of audio conversion and following prediction. This set count(s) of audio capture, 1 means audio conversion and prediction happens with each audio capture. If it is 2, once of prediction per twice of audio captures.
 Responce will also be quicker if you set smaller like 1, but usually prediction takes time and you might need to set this bigger if it's not so powerful.
 
 On my MacBookPro with 4 core CPU, 1 is fine.
 
-### `conf['pred_ensembles']`
+### `conf.pred_ensembles`
 
 This sets number of prediction ensembles.
 Past to present predictions are held in fifo, and this number is used as the size of this fifo.
 Ensemble is done by calclating geometric mean of all the predictions in the fifo.
 
-For example, if `conf['pred_ensembles'] = 5`, past 4 predictions and present prediction will be used for calculating present ensemble prediction result.
+For example, if `conf.pred_ensembles = 5`, past 4 predictions and present prediction will be used for calculating present ensemble prediction result.
 
 ## 4. Possible future applications
 

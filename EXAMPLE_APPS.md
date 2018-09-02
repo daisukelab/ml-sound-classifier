@@ -19,7 +19,7 @@ python train.py
 
 ## FSDKaggle2018small
 
-This trains a model for handing smaller audio data. Model is not small but audio, FS is 16 kHz for example.
+This trains a model for handing smaller audio data. Model is not small but audio, FS is 16 kHz for example.　This sample is less computationally expensive for audio processing.
 
 - `mobilenetv2_small_fsd2018_41cls.h5` is the model created by this.
 - 16 kHz, 1 second duration, 64 n_mels and 64 time hops.
@@ -47,12 +47,16 @@ But it would be effective if:
 This example has three notebooks, follow below to try this.
 
 1. Run followings.
-    ```bash
+    ```sh
     cd apps/cnn-laser-machine-listener
     ./download.sh
     ```
 2. Preprocess data by CNN-LML-Preprocess-Data.ipynb.
 3. Train model by CNN-LML-Train.ipynb.
-4. Convert model to .pb by /CNN-LML-TF-Model-Conversion.ipynb.
+4. Convert model to .pb by CNN-LML-TF-Model-Conversion.ipynb.
+5. You can predict in realtime as follows.
+    ```sh
+    python predict_this.py
+    ```
 
-`cnn-model-laser-machine-listener.pb` is also provided for quick try in real-time.
+`cnn-model-laser-machine-listener.pb` is provided for quick try.
