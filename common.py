@@ -20,6 +20,7 @@ import sys
 import shutil
 from pathlib import Path
 import pandas as pd
+sys.path.insert(0, str(Path.cwd()))
 
 # # Configration
 def auto_complete_conf(conf):
@@ -34,6 +35,7 @@ def auto_complete_conf(conf):
 
 from config import *
 auto_complete_conf(conf)
+print(conf)
 
 # # Data utilities
 def load_labels(conf):

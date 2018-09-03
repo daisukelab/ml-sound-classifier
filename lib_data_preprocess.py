@@ -39,7 +39,8 @@ class AudioMelsExclusiveSplit:
 
     def _get_random_sample_mels(self, mels_set):
         m = random.randint(0, len(mels_set) - 1)
-        pos = random.randint(0, mels_len(mels_set[m]) - conf_mels_len(self.conf) - 1)
+        pos_max = np.max([0, mels_len(mels_set[m]) - conf_mels_len(self.conf) - 1])
+        pos = random.randint(0, pos_max)
         #print('randomly chosen:', m, pos, 'for mels.shape', mels_set[m].shape)
         cut_mels = mels_set[m][:, pos:pos+conf_mels_len(self.conf)]
         if cut_mels.shape[0] == 0:
