@@ -37,7 +37,7 @@ print('Loaded trainset:%d samples.' % (len(X_train)))
 # 4. Normalize samplewise if requested
 if conf['normalize'] == 'samplewise':
     print(' normalize samplewise')
-    samplewise_mean_X(X_train)
+    samplewise_normalize_audio_X(X_train)
 
 # 5. Train folds
 history, model, plain_datagen = train_model(conf, fold=0,

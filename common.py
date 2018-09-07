@@ -142,11 +142,15 @@ def read_as_melspectrogram(conf, pathname, debug_display=False):
     return mels
 
 # # Dataset Utilities
-def samplewise_mean_X(X):
+def deprecated_samplewise_mean_audio_X(X):
     for i in range(len(X)):
-        _mean, _std = np.mean(X[i]), np.std(X[i])
-        X[i] -= _mean
-        X[i] /= _std + 1.0 # Kind of Compressor effect
+        X[i] -= np.mean(X[i])
+        X[i] /= (np.std(X[i]) + 1.0)
+
+def samplewise_normalize_audio_X(X):
+    for i in range(len(X)):
+        X[i] -= np.min(X[i])
+        X[i] /= (np.max(np.abs(X[i])) + 1.0)
 
 def split_long_data(conf, X):
     # Splits long mel-spectrogram data with small overlap
@@ -194,7 +198,7 @@ def audio_sample_to_X(conf, norm_audio):
         cur = s * conf.dims[1]
         X.append(mels[:, cur:cur + conf.dims[1]][..., np.newaxis])
     X = np.array(X)
-    samplewise_mean_X(X)
+    samplewise_normalize_audio_X(X)
     return X
 
 def load_sample_as_X(conf, filename):

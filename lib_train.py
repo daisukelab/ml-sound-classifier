@@ -71,7 +71,8 @@ def print_class_balance(title, y, labels):
 # # Training Functions
 from keras.preprocessing.image import ImageDataGenerator
 
-def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid):
+def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid,
+                      preprocessing_function=None):
     # Create Keras ImageDataGenerator
     aug_datagen = ImageDataGenerator(
         featurewise_center=conf.normalize == 'featurewise',
@@ -80,7 +81,8 @@ def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid):
         width_shift_range=0.4,
         height_shift_range=0.0,
         horizontal_flip=True,
-        preprocessing_function=get_random_eraser(v_l=-1, v_h=1)
+        preprocessing_function=get_random_eraser(v_l=-1, v_h=1) \
+            if preprocessing_function is None else preprocessing_function
     )
     plain_datagen = ImageDataGenerator(
         featurewise_center=aug_datagen.featurewise_center,
@@ -93,7 +95,8 @@ def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid):
         plain_datagen.mean, plain_datagen.std = aug_datagen.mean, aug_datagen.std
     # Create Generators
     train_generator = MixupGenerator(_Xtrain, _ytrain, 
-                                     alpha=1.0, batch_size=conf.batch_size, datagen=aug_datagen)()
+                                     alpha=1.0, batch_size=conf.batch_size,
+                                     datagen=aug_datagen)()
     valid_generator = plain_datagen.flow(_Xvalid, _yvalid,
                                          batch_size=conf.batch_size, shuffle=False)
     return train_generator, valid_generator, plain_datagen
@@ -132,7 +135,8 @@ def evaluate_model(conf, model, plain_datagen, X, y):
     print('Accuracy =', acc)
     return acc
 
-def train_model(conf, fold, dataset, model=None, init_weights=None):
+def train_model(conf, fold, dataset, model=None, init_weights=None,
+                preprocessing_function=None):
     # Split train/valid
     if len(dataset) == 3: # Auto train/valid split
         print('----- Fold #%d ----' % fold)
@@ -146,7 +150,7 @@ def train_model(conf, fold, dataset, model=None, init_weights=None):
 
     # Get generators, steps, callbacks and model
     train_generator, valid_generator, plain_datagen = \
-        create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid)
+        create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid, preprocessing_function)
     train_steps_per_epoch, valid_steps_per_epoch = \
         get_steps_per_epoch(conf, _Xtrain, _Xvalid)
     callbacks = [
