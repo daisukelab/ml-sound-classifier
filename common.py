@@ -39,20 +39,15 @@ print(conf)
 
 # # Data utilities
 def load_labels(conf):
-    conf.labels = loaddata(conf, 'labels.npy')
+    conf.labels = load_npy(conf, 'labels.npy')
     auto_complete_conf(conf)
     print('Labels are', conf.labels)
 
 def datapath(conf, filename):
     return conf.folder / filename
 
-def loaddata(conf, filename):
+def load_npy(conf, filename):
     return np.load(conf.folder / filename)
-
-def load_dataset(X_file, y_file, idx_file):
-    return loaddata(conf, X_file), \
-        keras.utils.to_categorical(loaddata(conf, y_file)), \
-        loaddata(conf, idx_file)
 
 # # Model
 import keras
@@ -70,8 +65,8 @@ def model_mobilenetv2(input_shape, num_classes):
     model = Model(inputs=base_model.input, outputs=predictions)
     return model
 
-def create_model(conf, num_classes, weights=None):
-    model = model_mobilenetv2(input_shape=conf.dims, num_classes=num_classes)
+def create_model(conf, weights=None):
+    model = model_mobilenetv2(input_shape=conf.dims, num_classes=conf.num_classes)
     model.compile(loss='categorical_crossentropy',
               optimizer=keras.optimizers.Adam(lr=conf.learning_rate),
               metrics=['accuracy'])
@@ -92,14 +87,14 @@ def freeze_model_layers(model, trainable_after_this=''):
 import librosa
 import librosa.display
 
-def read_audio(conf, pathname):
+def read_audio(conf, pathname, trim_long_data):
     y, sr = librosa.load(pathname, sr=conf.sampling_rate)
     # trim silence
     if 0 < len(y): # workaround: 0 length causes error
         y, _ = librosa.effects.trim(y) # trim, top_db=default(60)
     # make it unified length to conf.samples
     if len(y) > conf.samples: # long enough
-        if conf.audio_split == 'head':
+        if trim_long_data:
             y = y[0:0+conf.samples]
     else: # pad blank
         padding = conf.samples - len(y)    # add padding at both ends
@@ -119,7 +114,7 @@ def audio_to_melspectrogram(conf, audio):
     spectrogram = spectrogram.astype(np.float32)
     return spectrogram
 
-def show_melspectrogram(conf, mels):
+def show_melspectrogram(conf, mels, title='Log-frequency power spectrogram'):
     import IPython
     import matplotlib
     import matplotlib.pyplot as plt
@@ -130,11 +125,11 @@ def show_melspectrogram(conf, mels):
                              sr=conf.sampling_rate, hop_length=conf.hop_length,
                             fmin=conf.fmin, fmax=conf.fmax)
     plt.colorbar(format='%+2.0f dB')
-    plt.title('Log-frequency power spectrogram')
+    plt.title(title)
     plt.show()
 
-def read_as_melspectrogram(conf, pathname, debug_display=False):
-    x = read_audio(conf, pathname)
+def read_as_melspectrogram(conf, pathname, trim_long_data, debug_display=False):
+    x = read_audio(conf, pathname, trim_long_data)
     mels = audio_to_melspectrogram(conf, x)
     if debug_display:
         IPython.display.display(IPython.display.Audio(x, rate=conf.sampling_rate))
@@ -168,31 +163,12 @@ def split_long_data(conf, X):
             cur = L - one_length
             yield X[:, cur:cur+one_length]
 
-def convert_X(fnames, conf, datapath):
-    """Convert all files listed on fnames and generates training set.
-    Long samples are split into pieces by conf.samples.
-    
-    :param fnames: list of filenames
-    :param conf: configurations
-    :param datapath: folder to raw samples 
-    :return X: mel-spectrogram arraay, shape=(# of splits, conf('n_mels'), conf('dims')[1], 1)
-    :return index_map: index mapping to original file, shape=(# of splits,)
-    """
-    X = []
-    datapath = Path(datapath)
-    index_map = []
-    for i, fname in enumerate(fnames):
-        print('processing', fname)
-        data = read_as_melspectrogram(conf, datapath / fname)
-        for chunk in split_long_data(conf, data):
-            X.append(np.expand_dims(chunk, axis=-1))
-            index_map.append(i)
-    return np.array(X), np.array(index_map)
+def mels_len(mels):
+    """Gets lenfth of log mel-spectrogram."""
+    return mels.shape[1]
 
-def mels_len(mels): return mels.shape[1]
-
-def audio_sample_to_X(conf, norm_audio):
-    mels = audio_to_melspectrogram(conf, norm_audio)
+def audio_sample_to_X(conf, wave):
+    mels = audio_to_melspectrogram(conf, wave)
     X = []
     for s in range(0, mels_len(mels) // conf.dims[1]):
         cur = s * conf.dims[1]
@@ -201,9 +177,9 @@ def audio_sample_to_X(conf, norm_audio):
     samplewise_normalize_audio_X(X)
     return X
 
-def load_sample_as_X(conf, filename):
-    norm_audio = read_audio(conf, filename)
-    return audio_sample_to_X(conf, norm_audio)
+def load_sample_as_X(conf, filename, trim_long_data):
+    wave = read_audio(conf, filename, trim_long_data)
+    return audio_sample_to_X(conf, wave)
 
 def geometric_mean_preds(_preds):
     preds = _preds.copy()

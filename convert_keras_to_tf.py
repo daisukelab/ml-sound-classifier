@@ -13,7 +13,7 @@ args = parser.parse_args()
 print(args, dir(args))
 
 # create model
-model = create_model(conf, conf.num_classes)
+model = create_model(conf)
 model.load_weights(args.keras_weight)
 
 # load tensorflow and keras backend
