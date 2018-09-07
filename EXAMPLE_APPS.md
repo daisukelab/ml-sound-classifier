@@ -43,24 +43,24 @@ Classification problem of sounds in hardware laboratory.
 Originally simple NN was applied successfully for this classification problem, then what if we apply CNN?
 
 Simple answer is too much for the provided dataset as is.
-But it would be effective if:
+It might be effective if:
 
-- We need a single model that needs to work fine in different labs. Then the model needs to generalize well.
-- And we _have enough data_ from variety of laboratories & its variations.
+- We need a single model that needs to work fine in many different FabLabs. Then the model needs to generalize well.
+- And we _have enough data_ from variety of FabLabs and machines.
 
-This example has three notebooks, follow below to try this.
+This example has three notebooks to make it work.
 
 1. Run followings.
     ```sh
     cd apps/cnn-laser-machine-listener
     ./download.sh
     ```
-2. Preprocess data by CNN-LML-Preprocess-Data.ipynb.
-3. Train model by CNN-LML-Train.ipynb.
+2. Preprocess data by `CNN-LML-Preprocess-Data.ipynb`.
+3. Train model by `CNN-LML-Train.ipynb`.
 4. Convert model to .pb by `CNN-LML-TF-Model-Conversion.ipynb`.
-5. You can predict in realtime as follows.
+5. Then you can predict in realtime as follows.
     ```sh
-    python predict_this.py
+    python ../../realtime_predictor.py
     ```
 
-`cnn-model-laser-machine-listener.pb` is provided for quick try.
+`cnn-model-laser-machine-listener.pb` is ready in this repository for your quick try.

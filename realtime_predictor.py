@@ -55,7 +55,7 @@ def main_process(model, on_predicted):
         cur = int(i * conf.dims[1] / conf.rt_oversamples)
         X.append(mels[:, cur:cur+conf.dims[1], np.newaxis])
     X = np.array(X)
-    samplewise_mean_X(X)
+    samplewise_normalize_audio_X(X)
     raw_preds = model.predict(X)
     for raw_pred in raw_preds:
         pred_queue.append(raw_pred)
@@ -65,7 +65,7 @@ def main_process(model, on_predicted):
 # # Main controller
 def process_file(model, filename, on_predicted=on_predicted):
     # Feed audio data as if it was recorded in realtime
-    audio = read_audio(conf, filename) * 32767
+    audio = read_audio(conf, filename, trim_long_data=False) * 32767
     while len(audio) > conf.rt_chunk_samples:
         raw_frames.put(audio[:conf.rt_chunk_samples])
         audio = audio[conf.rt_chunk_samples:]
