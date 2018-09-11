@@ -256,7 +256,8 @@ def train_model(conf, fold, dataset, model=None, init_weights=None,
         get_steps_per_epoch(conf, Xtrain, Xvalid)
     callbacks = [
         ModelCheckpoint(str(datapath(conf, conf.best_weight_file)),
-                        monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True),
+                        monitor=conf.metric_save_ckpt, verbose=1,
+                        save_best_only=True, save_weights_only=True),
         TensorBoard(log_dir=str(datapath(conf, 'logs/fold_%d' % fold)), write_graph=True)
     ]
     if model is None:
