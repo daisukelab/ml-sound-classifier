@@ -11,9 +11,9 @@ def colormap_2d_flipud(norm_2d):
     #return cv2.applyColorMap(np.uint8(255 * np.flipud(norm_2d)), cv2.COLORMAP_JET)
     return np.flipud(norm_2d)
 
-def visualize_cam(conf, model, x, name):
+def visualize_cam(conf, model, x, name, layer='Conv_1'):
     """Grad-CAM visualization."""
-    last_conv_layer = model.get_layer('Conv_1') # MobileNetV2 last conv layer
+    last_conv_layer = model.get_layer(layer) # MobileNetV2 last conv layer
     if len(x.shape) == 3:
         X = x[np.newaxis, ...]
     else:

@@ -52,38 +52,7 @@ def load_npy(conf, filename):
     return np.load(conf.folder / filename)
 
 # # Model
-import keras
-from keras.applications.mobilenetv2 import MobileNetV2
-from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
-
-def model_mobilenetv2(input_shape, num_classes):
-    base_model = MobileNetV2(weights=None, input_shape=input_shape, include_top=False,
-                            alpha=0.35, depth_multiplier=0.5)
-    x = base_model.output
-    x = GlobalAveragePooling2D()(x)
-    x = Dense(1024, activation='relu')(x)
-    predictions = Dense(num_classes, activation='softmax')(x)
-    model = Model(inputs=base_model.input, outputs=predictions)
-    return model
-
-def create_model(conf, weights=None):
-    model = model_mobilenetv2(input_shape=conf.dims, num_classes=conf.num_classes)
-    model.compile(loss='categorical_crossentropy',
-              optimizer=keras.optimizers.Adam(lr=conf.learning_rate),
-              metrics=['accuracy'])
-    if weights is not None:
-        print('Loading weights:', weights)
-        model.load_weights(weights, by_name=True, skip_mismatch=True)
-    model.summary()
-    return model
-
-def freeze_model_layers(model, trainable_after_this=''):
-    trainable = False
-    for layer in model.layers:
-        if layer.name == trainable_after_this:
-            trainable = True
-        layer.trainable = trainable
+from model import create_model, freeze_model_layers
 
 # # Audio Utilities
 import librosa

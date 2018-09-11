@@ -13,6 +13,7 @@ conf.fmin = 20
 conf.fmax = conf.sampling_rate // 2
 conf.n_mels = 128
 conf.n_fft = conf.n_mels * 20
+conf.model == 'mobilenetv2' # 'alexnet'
 
 # Labels
 conf.labels = ['Hi-hat', 'Saxophone', 'Trumpet', 'Glockenspiel', 'Cello', 'Knock',

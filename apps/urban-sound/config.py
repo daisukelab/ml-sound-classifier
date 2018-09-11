@@ -13,6 +13,7 @@ conf.fmin = 20
 conf.fmax = conf.sampling_rate // 2
 conf.n_mels = 128
 conf.n_fft = conf.n_mels * 20
+conf.model == 'mobilenetv2' # 'alexnet'
 
 # Labels
 conf.labels = ['dog_bark', 'children_playing', 'car_horn', 'air_conditioner',
@@ -28,6 +29,7 @@ conf.test_size = 0.01
 conf.samples_per_file = 5
 conf.batch_size = 32
 conf.learning_rate = 0.0001
+conf.metric_save_ckpt = 'val_acc'
 conf.epochs = 500
 conf.verbose = 2
 conf.best_weight_file = 'best_model_weight.h5'
