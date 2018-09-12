@@ -1,13 +1,13 @@
 # Train FSDKaggle2018 model
 #
 import sys
-sys.path.append('../..')
+sys.path.append('../../..')
 from lib_train import *
 
-X_TRAIN = 'X_train.npy'
-Y_TRAIN = 'y_train.npy'
-Y_TEST  = 'y_test.npy'
-X_TEST  = 'X_test.npy'
+X_TRAIN = '../X_train.npy'
+Y_TRAIN = '../y_train.npy'
+Y_TEST  = '../y_test.npy'
+X_TEST  = '../X_test.npy'
 
 # 1. Load Meta data
 DATAROOT = Path.home() / '.kaggle/competitions/freesound-audio-tagging'
@@ -42,7 +42,7 @@ history, model, plain_datagen = train_model(conf, fold=0,
                                             dataset=[X_train, y_train],
                                             model=None,
                                             init_weights=None, # from scratch
-                                            #init_weights='../../model/mobilenetv2_fsd2018_41cls.h5'
+                                            #init_weights='../../model/mobilenetv2_small_fsd2018_41cls.h5'
 )
 acc = evaluate_model(conf, model, plain_datagen, X_test, y_test)
 

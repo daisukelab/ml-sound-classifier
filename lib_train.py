@@ -11,6 +11,7 @@ import os
 from random_eraser import get_random_eraser
 from mixup_generator import MixupGenerator
 from sklearn.model_selection import train_test_split
+import keras
 from keras.callbacks import (EarlyStopping, LearningRateScheduler,
                              ModelCheckpoint, TensorBoard, ReduceLROnPlateau)
 from keras import backend as K

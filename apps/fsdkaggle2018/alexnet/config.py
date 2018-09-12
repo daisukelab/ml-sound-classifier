@@ -6,14 +6,14 @@ from easydict import EasyDict
 conf = EasyDict()
 
 # Basic configurations
-conf.sampling_rate = 16000
+conf.sampling_rate = 44100
 conf.duration = 1
-conf.hop_length = 253 # to make time steps 64
+conf.hop_length = 347 # to make time steps 128
 conf.fmin = 20
 conf.fmax = conf.sampling_rate // 2
-conf.n_mels = 64
+conf.n_mels = 128
 conf.n_fft = conf.n_mels * 20
-conf.model = 'mobilenetv2' # 'alexnet'
+conf.model = 'alexnet'
 
 # Labels
 conf.labels = ['Hi-hat', 'Saxophone', 'Trumpet', 'Glockenspiel', 'Cello', 'Knock',
@@ -26,7 +26,7 @@ conf.labels = ['Hi-hat', 'Saxophone', 'Trumpet', 'Glockenspiel', 'Cello', 'Knock
        'Drawer_open_or_close', 'Applause', 'Acoustic_guitar',
        'Violin_or_fiddle', 'Finger_snapping']
 
-# Training Configurations
+# Training configurations
 conf.folder = '.'
 conf.n_fold = 1
 conf.normalize = 'samplewise'
@@ -38,10 +38,10 @@ conf.batch_size = 32
 conf.learning_rate = 0.0001
 conf.epochs = 500
 conf.verbose = 2
-conf.best_weight_file = 'best_mobilenetv2_weight.h5'
+conf.best_weight_file = 'best_alexbased_fsd2018_weight.h5'
 
 # Runtime conficurations
 conf.rt_process_count = 1
 conf.rt_oversamples = 10
 conf.pred_ensembles = 10
-conf.runtime_model_file = 'please make yourself' ### NOT PROVIDED
+conf.runtime_model_file = 'model/alexbased_fsd2018_41cls.pb'

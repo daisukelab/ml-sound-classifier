@@ -10,10 +10,17 @@ This trains a model for Freesound Dataset Kaggle 2018 dataset.
 - It has useful representation for using as pretrained model for other tasks.
 - 44.1 kHz, 1 second duration, 128 n_mels and 128 time hops.
 
-Followings will train model:
+Followings will train MobileNetV2 model:
 
 ```Python
 cd apps/fsdkaggle2018
+python train.py
+```
+
+Followings will train AlexNet based model:
+
+```Python
+cd apps/fsdkaggle2018/alexnet
 python train.py
 ```
 
@@ -33,6 +40,13 @@ Followings will train model:
 ```Python
 cd apps/fsdkaggle2018small
 python train_this.py
+```
+
+Followings will train AlexNet based model:
+
+```Python
+cd apps/fsdkaggle2018/alexnet
+python train.py
 ```
 
 ## CNN Laser Machine Listener

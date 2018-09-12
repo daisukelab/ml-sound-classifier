@@ -39,7 +39,7 @@ def model_mobilenetv2(input_shape, num_classes):
     model = Model(inputs=base_model.input, outputs=predictions)
     return model
 
-def create_model(conf, weights=None):
+def create_model(conf, weights=None, show_detail=False):
     if conf.model == 'alexnet':
         print('Model: AlexNet based')
         model = model_cnn_alexnet(conf.dims, conf.num_classes,
@@ -53,7 +53,8 @@ def create_model(conf, weights=None):
     if weights is not None:
         print('Loading weights:', weights)
         model.load_weights(weights, by_name=True, skip_mismatch=True)
-    model.summary()
+    if show_detail:
+        model.summary()
     return model
 
 def freeze_model_layers(model, trainable_after_this=''):
