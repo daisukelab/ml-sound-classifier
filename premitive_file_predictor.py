@@ -23,7 +23,7 @@ model = KerasTFGraph(args.model_pb_graph,
     keras_learning_phase_name='import/bn_Conv1/keras_learning_phase',
     output_name='import/output0')
 
-X = load_sample_as_X(conf, args.audio_file)
+X = load_sample_as_X(conf, args.audio_file, trim_long_data=False)
 
 preds = model.predict(X)
 for pred in preds:

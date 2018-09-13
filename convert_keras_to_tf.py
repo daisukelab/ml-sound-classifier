@@ -5,6 +5,8 @@ from common import *
 import argparse
 
 parser = argparse.ArgumentParser(description='Keras to Tensorflow converter')
+parser.add_argument('model_type', type=str,
+                    help='Model type "alexnet" or "mobilenetv2".')
 parser.add_argument('keras_weight', type=str,
                     help='Keras model weight file.')
 parser.add_argument('out_prefix', type=str,
@@ -13,6 +15,7 @@ args = parser.parse_args()
 print(args, dir(args))
 
 # create model
+conf.model = args.model_type
 model = create_model(conf)
 model.load_weights(args.keras_weight)
 
