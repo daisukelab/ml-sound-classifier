@@ -34,6 +34,13 @@ def auto_complete_conf(conf):
     conf.dims = (conf.n_mels, 1 + int(np.floor(conf.samples/conf.hop_length)), 1)
     if 'metric_save_ckpt' not in conf:
         conf.metric_save_ckpt = 'val_loss'
+    if 'logdir' not in conf:
+        conf.logdir = 'logs'
+    if 'X_train' not in conf:
+        conf.X_train = 'X_train.npy'
+        conf.y_train = 'y_train.npy'
+        conf.X_test  = 'X_test.npy'
+        conf.y_test  = 'y_test.npy'
 
 from config import *
 auto_complete_conf(conf)

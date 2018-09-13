@@ -4,10 +4,8 @@ import sys
 sys.path.append('../..')
 from lib_train import *
 
-X_TRAIN = 'X_train.npy'
-Y_TRAIN = 'y_train.npy'
-Y_TEST  = 'y_test.npy'
-X_TEST  = 'X_test.npy'
+conf.logdir = 'logs_mobilenetv2'
+conf.best_weight_file = 'best_mobilenetv2_weight.h5'
 
 # 1. Load Meta data
 DATAROOT = Path.home() / '.kaggle/competitions/freesound-audio-tagging'
@@ -21,25 +19,25 @@ def fsdkaggle2018_map_y_train(idx_train, plain_y_train):
     return np.array([plain_y_train[i] for i in idx_train])
 def fsdkaggle2018_make_preprocessed_train_data():
     conf.folder.mkdir(parents=True, exist_ok=True)
-    if not os.path.exists(X_TRAIN):
+    if not os.path.exists(conf.X_train):
         XX = mels_build_multiplexed_X(conf, [DATAROOT/'audio_train'/fname for fname in df_train.fname])
         X_train, y_train, X_test, y_test = \
             train_valid_split_multiplexed(conf, XX, plain_y_train, demux=True)
-        np.save(X_TRAIN, X_train)
-        np.save(Y_TRAIN, y_train)
-        np.save(X_TEST, X_test)
-        np.save(Y_TEST, y_test)
+        np.save(conf.X_train, X_train)
+        np.save(conf.y_train, y_train)
+        np.save(conf.X_test, X_test)
+        np.save(conf.y_test, y_test)
 
 fsdkaggle2018_make_preprocessed_train_data()
 
 # 3. Load all dataset & normalize
-X_train, y_train = load_dataset(conf, X_TRAIN, Y_TRAIN, normalize=True)
-X_test, y_test = load_dataset(conf, X_TEST, Y_TEST, normalize=True)
+X_train, y_train = load_dataset(conf, conf.X_train, conf.y_train, normalize=True)
+X_test, y_test = load_dataset(conf, conf.X_test, conf.y_test, normalize=True)
 print('Loaded train:test = {}:{} samples.'.format(len(X_train), len(X_test)))
 
 # 4. Train folds
 history, model, plain_datagen = train_model(conf, fold=0,
-                                            dataset=[X_train, y_train],
+                                            dataset=[X_train, y_train, X_test, y_test],
                                             model=None,
                                             init_weights=None, # from scratch
                                             #init_weights='../../model/mobilenetv2_small_fsd2018_41cls.h5'
