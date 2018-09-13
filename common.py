@@ -32,6 +32,8 @@ def auto_complete_conf(conf):
     conf.mels_onestep_samples = conf.rt_chunk_samples * conf.rt_process_count
     conf.mels_convert_samples = conf.samples + conf.mels_onestep_samples
     conf.dims = (conf.n_mels, 1 + int(np.floor(conf.samples/conf.hop_length)), 1)
+    if 'model' not in conf:
+        conf.model = 'mobilenetv2'
     if 'metric_save_ckpt' not in conf:
         conf.metric_save_ckpt = 'val_loss'
     if 'logdir' not in conf:

@@ -76,11 +76,19 @@ def my_exit(model):
     exit(0)
 
 def get_model(graph_file):
+    model_node = {
+        'alexnet': ['import/conv2d_1_input',
+                    'import/batch_normalization_1/keras_learning_phase',
+                    'import/output0'],
+        'mobilenetv2': ['import/input_1',
+                        'import/bn_Conv1/keras_learning_phase',
+                        'import/output0']
+    }
     return KerasTFGraph(
         conf.runtime_model_file if graph_file == '' else graph_file,
-        input_name='import/input_1',
-        keras_learning_phase_name='import/bn_Conv1/keras_learning_phase',
-        output_name='import/output0')
+        input_name=model_node[conf.model][0],
+        keras_learning_phase_name=model_node[conf.model][1],
+        output_name=model_node[conf.model][2])
 
 def run_predictor():
     model = get_model(args.model_pb_graph)
