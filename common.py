@@ -20,33 +20,45 @@ import sys
 import shutil
 from pathlib import Path
 import pandas as pd
+import matplotlib.pyplot as plt
 sys.path.insert(0, str(Path.cwd()))
 
 # # Configration
+def is_handling_audio(conf):
+    return 'sampling_rate' in conf
+
 def auto_complete_conf(conf):
-    conf.folder = Path(conf.folder)
+    if 'folder' in conf:
+        conf.folder = Path(conf.folder)
     conf.label2int = {l:i for i, l in enumerate(conf.labels)}
     conf.num_classes = len(conf.labels)
-    conf.samples = conf.sampling_rate * conf.duration
-    conf.rt_chunk_samples = conf.sampling_rate // conf.rt_oversamples
-    conf.mels_onestep_samples = conf.rt_chunk_samples * conf.rt_process_count
-    conf.mels_convert_samples = conf.samples + conf.mels_onestep_samples
-    conf.dims = (conf.n_mels, 1 + int(np.floor(conf.samples/conf.hop_length)), 1)
+    # audio auto configurations
+    if is_handling_audio(conf):
+        conf.samples = conf.sampling_rate * conf.duration
+        conf.rt_chunk_samples = conf.sampling_rate // conf.rt_oversamples
+        conf.mels_onestep_samples = conf.rt_chunk_samples * conf.rt_process_count
+        conf.mels_convert_samples = conf.samples + conf.mels_onestep_samples
+        conf.dims = (conf.n_mels, 1 + int(np.floor(conf.samples/conf.hop_length)), 1)
+    # optional configurations
     if 'model' not in conf:
         conf.model = 'mobilenetv2'
     if 'metric_save_ckpt' not in conf:
         conf.metric_save_ckpt = 'val_loss'
+    if 'metric_save_mode' not in conf:
+        conf.metric_save_mode='auto'
     if 'logdir' not in conf:
         conf.logdir = 'logs'
-    if 'dont_balance_dataset' not in conf:
-        conf.dont_balance_dataset = False
-    if 'balance_by_over_sampling' not in conf:
-        conf.balance_by_over_sampling = True
+    if 'data_balancing' not in conf:
+        conf.data_balancing = 'oversampling'
     if 'X_train' not in conf:
         conf.X_train = 'X_train.npy'
         conf.y_train = 'y_train.npy'
         conf.X_test  = 'X_test.npy'
         conf.y_test  = 'y_test.npy'
+    if 'steps_per_epoch_limit' not in conf:
+        conf.steps_per_epoch_limit = None
+    if 'samples_per_file' not in conf:
+        conf.samples_per_file = 1
 
 from config import *
 auto_complete_conf(conf)
@@ -65,7 +77,8 @@ def load_npy(conf, filename):
     return np.load(conf.folder / filename)
 
 # # Model
-from model import create_model, freeze_model_layers
+if is_handling_audio(conf):
+    from model import create_model, freeze_model_layers
 
 # # Audio Utilities
 import librosa
@@ -101,7 +114,6 @@ def audio_to_melspectrogram(conf, audio):
 def show_melspectrogram(conf, mels, title='Log-frequency power spectrogram'):
     import IPython
     import matplotlib
-    import matplotlib.pyplot as plt
     from sklearn.model_selection import StratifiedKFold
     matplotlib.style.use('ggplot')
 
@@ -134,7 +146,7 @@ def samplewise_normalize_audio_X(X):
 def samplewise_normalize_X(X):
     for i in range(len(X)):
         X[i] -= np.min(X[i])
-        X[i] /= (np.max(np.abs(X[i])) + K.epsilon())
+        X[i] /= (np.max(np.abs(X[i])) + 1e-07) # same as K.epsilon()
 
 def split_long_data(conf, X):
     # Splits long mel-spectrogram data with small overlap
@@ -207,7 +219,8 @@ class KerasTFGraph:
 
 
 # # Pyaudio Utilities
-import pyaudio
+if is_handling_audio(conf):
+    import pyaudio
 
 def print_pyaudio_devices():
     p = pyaudio.PyAudio()

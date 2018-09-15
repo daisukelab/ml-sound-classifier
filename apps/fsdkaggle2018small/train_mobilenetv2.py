@@ -42,6 +42,8 @@ history, model, plain_datagen = train_model(conf, fold=0,
                                             init_weights=None, # from scratch
                                             #init_weights='../../model/mobilenetv2_small_fsd2018_41cls.h5'
 )
-acc = evaluate_model(conf, model, plain_datagen, X_test, y_test)
+
+# 5. Evaluate
+evaluate_model(conf, model, X_test, y_test)
 
 print('___ training finished ___')

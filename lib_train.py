@@ -8,10 +8,13 @@
 
 from common import *
 import os
-from random_eraser import get_random_eraser
-from mixup_generator import MixupGenerator
+from ext.random_eraser import get_random_eraser
+from ext.mixup_generator import MixupGenerator
+from ext.balanced_mixup_generator import BalancedMixupGenerator
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 import keras
+from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import (EarlyStopping, LearningRateScheduler,
                              ModelCheckpoint, TensorBoard, ReduceLROnPlateau)
 from keras import backend as K
@@ -144,8 +147,8 @@ def get_class_distribution_list(y, num_classes):
 
 def _balance_class(X, y, min_or_max, sampler_class, random_state):
     """Balance class distribution with sampler_class."""
-    y = flatten_y_if_onehot(y)
-    distribution = get_class_distribution(y)
+    y_cls = flatten_y_if_onehot(y)
+    distribution = get_class_distribution(y_cls)
     classes = list(distribution.keys())
     counts  = list(distribution.values())
     nsamples = np.max(counts) if min_or_max == 'max' \
@@ -153,7 +156,7 @@ def _balance_class(X, y, min_or_max, sampler_class, random_state):
     flat_ratio = {cls:nsamples for cls in classes}
     Xidx = [[xidx] for xidx in range(len(X))]
     sampler_instance = sampler_class(ratio=flat_ratio, random_state=random_state)
-    Xidx_resampled, y_cls_resampled = sampler_instance.fit_sample(Xidx, y)
+    Xidx_resampled, y_cls_resampled = sampler_instance.fit_sample(Xidx, y_cls)
     sampled_index = [idx[0] for idx in Xidx_resampled]
     return np.array([X[idx] for idx in sampled_index]), np.array([y[idx] for idx in sampled_index])
 
@@ -186,11 +189,12 @@ def print_class_balance(title, y, labels):
         print(' 0 sample classes:', zeroclasses)
 
 # # Training Functions
-from keras.preprocessing.image import ImageDataGenerator
-
 def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid,
                       image_data_generator=None):
     # Create Keras ImageDataGenerator
+    def print_generator_use(message):
+        print(' {}{}'.format(message,
+            ', with class balancing' if conf.data_balancing == 'by_generator' else ''))
     if image_data_generator is None:
         aug_datagen = ImageDataGenerator(
             rotation_range=0,
@@ -198,15 +202,17 @@ def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid,
             height_shift_range=0.0,
             horizontal_flip=True,
             preprocessing_function=get_random_eraser(v_l=0, v_h=1))
-        print(' using normal data generator')
+        print_generator_use('Using normal data generator')
     else:
         aug_datagen = image_data_generator
-        print(' using special data generator')
+        print_generator_use('Using Special data generator')
     plain_datagen = ImageDataGenerator()
     # Create Generators
-    train_generator = MixupGenerator(_Xtrain, _ytrain, 
-                                     alpha=1.0, batch_size=conf.batch_size,
-                                     datagen=aug_datagen)()
+    mixup_class = MixupGenerator if conf.data_balancing != 'by_generator' \
+                  else BalancedMixupGenerator
+    train_generator = mixup_class(_Xtrain, _ytrain, 
+                                  alpha=1.0, batch_size=conf.batch_size,
+                                  datagen=aug_datagen)()
     valid_generator = plain_datagen.flow(_Xvalid, _yvalid,
                                          batch_size=conf.batch_size, shuffle=False)
     return train_generator, valid_generator, plain_datagen
@@ -214,51 +220,74 @@ def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid,
 def get_steps_per_epoch(conf, _Xtrain, _Xvalid):
     train_steps_per_epoch = len(_Xtrain) // conf.batch_size
     valid_steps_per_epoch = len(_Xvalid) // conf.batch_size
+    if conf.steps_per_epoch_limit is not None:
+        train_steps_per_epoch = np.clip(train_steps_per_epoch, train_steps_per_epoch,
+                                        conf.steps_per_epoch_limit)
+        valid_steps_per_epoch = np.clip(valid_steps_per_epoch, valid_steps_per_epoch,
+                                        conf.steps_per_epoch_limit)
+    if conf.verbose > 0:
+        print(' train_steps_per_epoch, valid_steps_per_epoch = {}, {}' \
+              .format(train_steps_per_epoch, valid_steps_per_epoch))
     return train_steps_per_epoch, valid_steps_per_epoch
 
-def get_cross_valid_fold(conf, fold, X, y):
-    """Gets training set split into train/valid, and balanced."""
-    indices = np.array(range(len(X)))
-    # Cross validation split -> _Xtrain|_ytrain, _Xvalid|_yvalid
-    train_fold, valid_fold, _, _ = train_test_split(indices, y,
-                                                    test_size=conf.test_size,
-                                                    random_state=conf.random_state + fold*10)
-    _Xtrain, _ytrain = X[train_fold], y[train_fold]
-    _Xvalid, _yvalid = X[valid_fold], y[valid_fold]
-
-    return _Xtrain, _ytrain, _Xvalid, _yvalid
-
 def balance_dataset(conf, X, y):
-    # Balance distribution -> _Xtrain|_ytrain (overwritten)
-    print_class_balance(' <Before> Current category distribution', y, conf.labels)
-    X, y = balance_class_by_over_sampling(X, y) if conf.balance_by_over_sampling \
-      else balance_class_by_under_sampling(X, y)
-
-    print_class_balance(' <After> Balanced distribution', y, conf.labels)
+    if conf.data_balancing == 'over_sampling' or conf.data_balancing == 'under_sampling':
+        print_class_balance(' <Before> Current category distribution', y, conf.labels)
+        X, y = balance_class_by_over_sampling(X, y) if conf.balance_by_over_sampling \
+          else balance_class_by_under_sampling(X, y)
+        print_class_balance(' <After> Balanced distribution', y, conf.labels)
+    else:
+        print(' Dataset is not balanced so far, conf.data_balancing =', conf.data_balancing)
     return X, y
 
-def calculate_acc_by_preds(y, preds):
-    targets = flatten_y_if_onehot(y)
-    results = np.argmax(preds, axis=1)
-    acc = np.sum(targets == results) / len(targets)
-    return acc
+def calculate_metrics(y_true, y_pred):
+    """Calculate possible metrics."""
+    y_true = np.argmax(y_true, axis=-1)
+    y_pred = np.argmax(y_pred, axis=-1)
+    f1 = f1_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    accuracy = accuracy_score(y_true, y_pred)
+    return f1, recall, precision, accuracy
 
-def evaluate_model(conf, model, plain_datagen, X, y):
+def summarize_metrics_history(metrics_history, show_graph=True):
+    """Summarize history of metrics."""
+    metrics_history = np.array(metrics_history)
+    df=pd.DataFrame({'x': np.arange(1, metrics_history.shape[0]+1),
+                     'f1': metrics_history[:, 0],
+                     'recall': metrics_history[:, 1],
+                     'precision': metrics_history[:, 2],
+                     'accuracy': metrics_history[:, 3]})
+    print(df[['f1', 'recall', 'precision', 'accuracy']].describe())
+
+    if show_graph:
+        plt.plot('x', 'f1', data=df, marker='', color='blue', markersize=2, linewidth=1)
+        plt.plot('x', 'recall', data=df, marker='', color='olive', linewidth=1)
+        plt.plot('x', 'precision', data=df, marker='o', color='pink', markerfacecolor='red', linewidth=4)
+        plt.plot('x', 'accuracy', data=df, marker='', color='black', linewidth=1)
+        plt.legend()
+        plt.show()
+
+    return df
+
+def evaluate_model(conf, model, X, y):
     # Predict
-    test_generator = plain_datagen.flow(X, y, batch_size=conf.batch_size, shuffle=False)
+    test_generator = ImageDataGenerator().flow(X, y, batch_size=conf.batch_size, shuffle=False)
     preds = model.predict_generator(test_generator)
-    # Calculate accuracy as is
-    acc = calculate_acc_by_preds(y, preds)
-    print('Accuracy =', acc)
+    # Calculate metrics
+    f1, recall, precision, acc = calculate_metrics(y, preds)
+    print('F1/Recall/Precision/Accuracy = {0:.4f}/{1:.4f}/{2:.4f}/{3:.4f}' \
+          .format(f1, recall, precision, acc))
     # Calculate ensemble accuracy
     if conf.samples_per_file > 1:
         sample_preds_list = np.array([preds[i::conf.samples_per_file]
                                       for i in range(conf.samples_per_file)])
         one_y = y[::conf.samples_per_file]
         ensemble_preds = geometric_mean_preds(sample_preds_list)
-        acc = calculate_acc_by_preds(one_y, ensemble_preds)
-        print('Ensemble Accuracy =', acc)
-    return acc
+        f1, recall, precision, acc = calculate_metrics(one_y, preds)
+        print('Ensemble F1/Recall/Precision/Accuracy = {0:.4f}/{1:.4f}/{2:.4f}/{3:.4f}' \
+              .format(f1, recall, precision, acc))
+    return f1, recall, precision, acc
 
 def train_classifier(conf, fold, dataset, model=None, init_weights=None,
                      image_data_generator=None):
@@ -266,15 +295,16 @@ def train_classifier(conf, fold, dataset, model=None, init_weights=None,
     if len(dataset) == 2: # Auto train/valid split
         print('----- Fold #%d ----' % fold)
         _X_train, _y_train = dataset
-        # c. Cross validation split & balance # of samples
-        Xtrain, ytrain, Xvalid, yvalid = \
-            get_cross_valid_fold(conf, fold, _X_train, _y_train)
+        # Cross validation split & balance # of samples
+        Xtrain, Xvalid, ytrain, yvalid = \
+            train_test_split(_X_train, _y_train,
+                             test_size=conf.test_size,
+                             random_state=conf.random_state)
     else: # Or predetermined train/valid split
         Xtrain, ytrain, Xvalid, yvalid = dataset
 
     # Balamce train set
-    if not conf.dont_balance_dataset:
-        Xtrain, ytrain = balance_dataset(conf, Xtrain, ytrain)
+    Xtrain, ytrain = balance_dataset(conf, Xtrain, ytrain)
 
     # Get generators, steps, callbacks, and model
     train_generator, valid_generator, plain_datagen = \
@@ -283,7 +313,8 @@ def train_classifier(conf, fold, dataset, model=None, init_weights=None,
         get_steps_per_epoch(conf, Xtrain, Xvalid)
     callbacks = [
         ModelCheckpoint(str(datapath(conf, conf.best_weight_file)),
-                        monitor=conf.metric_save_ckpt, verbose=1,
+                        monitor=conf.metric_save_ckpt, mode=conf.metric_save_mode,
+                        verbose=1 if conf.verbose > 0 else 0,
                         save_best_only=True, save_weights_only=True),
         TensorBoard(log_dir=str(datapath(conf, 'logs/fold_%d' % fold)), write_graph=True)
     ]
