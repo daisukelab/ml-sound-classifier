@@ -38,6 +38,8 @@ def auto_complete_conf(conf):
         conf.metric_save_ckpt = 'val_loss'
     if 'logdir' not in conf:
         conf.logdir = 'logs'
+    if 'dont_balance_dataset' not in conf:
+        conf.dont_balance_dataset = False
     if 'X_train' not in conf:
         conf.X_train = 'X_train.npy'
         conf.y_train = 'y_train.npy'

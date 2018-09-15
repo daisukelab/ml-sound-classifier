@@ -198,7 +198,7 @@ def get_steps_per_epoch(conf, _Xtrain, _Xvalid):
     valid_steps_per_epoch = len(_Xvalid) // conf.batch_size
     return train_steps_per_epoch, valid_steps_per_epoch
 
-def get_cross_valid_fold_balanced(conf, fold, X, y):
+def get_cross_valid_fold(conf, fold, X, y):
     """Gets training set split into train/valid, and balanced."""
     indices = np.array(range(len(X)))
     # Cross validation split -> _Xtrain|_ytrain, _Xvalid|_yvalid
@@ -208,12 +208,14 @@ def get_cross_valid_fold_balanced(conf, fold, X, y):
     _Xtrain, _ytrain = X[train_fold], y[train_fold]
     _Xvalid, _yvalid = X[valid_fold], y[valid_fold]
 
-    # Balance distribution -> _Xtrain|_ytrain (overwritten)
-    print_class_balance('Current fold category distribution', _ytrain, conf.labels)
-    _Xtrain, _ytrain = balance_class_by_over_sampling(_Xtrain, _ytrain)
-    print_class_balance('after balanced', _ytrain, conf.labels)
-
     return _Xtrain, _ytrain, _Xvalid, _yvalid
+
+def balance_dataset(conf, X, y):
+    # Balance distribution -> _Xtrain|_ytrain (overwritten)
+    print_class_balance(' <Before> Current category distribution', y, conf.labels)
+    X, y = balance_class_by_over_sampling(X, y)
+    print_class_balance(' <After> Balanced distribution', y, conf.labels)
+    return X, y
 
 def calculate_acc_by_preds(y, preds):
     targets = np.argmax(y, axis=1) if len(y.shape) == 2 else y
@@ -246,9 +248,13 @@ def train_model(conf, fold, dataset, model=None, init_weights=None,
         _X_train, _y_train = dataset
         # c. Cross validation split & balance # of samples
         Xtrain, ytrain, Xvalid, yvalid = \
-            get_cross_valid_fold_balanced(conf, fold, _X_train, _y_train)
+            get_cross_valid_fold(conf, fold, _X_train, _y_train)
     else: # Or predetermined train/valid split
         Xtrain, ytrain, Xvalid, yvalid = dataset
+
+    # Balamce train set
+    if not conf.dont_balance_dataset:
+        Xtrain, ytrain = balance_dataset(conf, Xtrain, ytrain)
 
     # Get generators, steps, callbacks, and model
     train_generator, valid_generator, plain_datagen = \
