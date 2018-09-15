@@ -40,6 +40,8 @@ def auto_complete_conf(conf):
         conf.logdir = 'logs'
     if 'dont_balance_dataset' not in conf:
         conf.dont_balance_dataset = False
+    if 'balance_by_over_sampling' not in conf:
+        conf.balance_by_over_sampling = True
     if 'X_train' not in conf:
         conf.X_train = 'X_train.npy'
         conf.y_train = 'y_train.npy'
@@ -129,6 +131,11 @@ def samplewise_normalize_audio_X(X):
         X[i] -= np.min(X[i])
         X[i] /= (np.max(np.abs(X[i])) + 1.0)
 
+def samplewise_normalize_X(X):
+    for i in range(len(X)):
+        X[i] -= np.min(X[i])
+        X[i] /= (np.max(np.abs(X[i])) + K.epsilon())
+
 def split_long_data(conf, X):
     # Splits long mel-spectrogram data with small overlap
     L = X.shape[1]
@@ -208,4 +215,22 @@ def print_pyaudio_devices():
     for i in range(count):
         dev = p.get_device_info_by_index(i)
         print (i, dev['name'], dev)
+
+# # Test Utilities
+def recursive_test(a, b, fn):
+    """Greedy test every single corresponding contents between a & b recursively."""
+    if isinstance(a, (list, set, tuple, np.ndarray)):
+        results = np.array([test_equal(aa, bb) for aa, bb in zip(a, b)])
+        #print(results) # for debug
+        return np.all(results == 1)
+    else:
+        return 1 if np.all(fn(a, b)) else 0
+
+def test_equal(a, b):
+    """Exhaustively test if a equals b"""
+    return recursive_test(a, b, lambda a, b: a == b)
+
+def test_not_equal(a, b):
+    """Exhaustively test if a != b"""
+    return not test_equal(a, b)
 

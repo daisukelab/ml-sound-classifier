@@ -5,8 +5,8 @@ sys.path.append('../..')
 from lib_train import *
 
 conf.model = 'alexnet'
-conf.logdir = 'logs_alexbased'
-conf.best_weight_file = 'best_alexbased_weight.h5'
+conf.logdir = 'logs_alexbased_small'
+conf.best_weight_file = 'best_alexbased_small_weight.h5'
 
 # 1. Load Meta data
 DATAROOT = Path.home() / '.kaggle/competitions/freesound-audio-tagging'
@@ -37,11 +37,11 @@ X_test, y_test = load_dataset(conf, conf.X_test, conf.y_test, normalize=True)
 print('Loaded train:test = {}:{} samples.'.format(len(X_train), len(X_test)))
 
 # 4. Train folds
-history, model, plain_datagen = train_model(conf, fold=0,
-                                            dataset=[X_train, y_train, X_test, y_test],
-                                            model=None,
-                                            init_weights=None, # from scratch
-                                            #init_weights='../../model/mobilenetv2_small_fsd2018_41cls.h5'
+history, model, plain_datagen = train_classifier(conf, fold=0,
+                                                 dataset=[X_train, y_train, X_test, y_test],
+                                                 model=None,
+                                                 init_weights=None, # from scratch
+                                                 #init_weights='../../model/mobilenetv2_small_fsd2018_41cls.h5'
 )
 acc = evaluate_model(conf, model, plain_datagen, X_test, y_test)
 

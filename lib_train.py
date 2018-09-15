@@ -16,6 +16,9 @@ from keras.callbacks import (EarlyStopping, LearningRateScheduler,
                              ModelCheckpoint, TensorBoard, ReduceLROnPlateau)
 from keras import backend as K
 
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+
 # # Dataset Utilities
 def mels_populate_samples(org_mels, targ_len, targ_samples):
     """Populates training samples from original full length wave's log mel-spectrogram."""
@@ -91,7 +94,7 @@ def train_valid_split_multiplexed(conf, XX, y, demux=True, delta_random_state=0)
         else:
             return _XX, _y
     # decode y if it is one-hot vector
-    _y = y if len(y.shape) == 1 else np.argmax(y, axis=-1)
+    _y = flatten_y_if_onehot(y)
     print()
     # split train/valid
     train_fold, valid_fold, _, _ = train_test_split(list(range(len(_y))), _y,
@@ -115,11 +118,15 @@ def load_dataset(conf, X_or_XX_file, y_file, normalize):
     return X_or_XX, y
 
 # # Data Distribution Utilities
+def flatten_y_if_onehot(y):
+    """De-one-hot y, i.e. [0,1,0,0,...] to 1 for all y."""
+    return y if len(np.array(y).shape) == 1 else [np.argmax(one) for one in y]
+
 def get_class_distribution(y):
     """Calculate number of samples per class."""
     # y_cls can be one of [OH label, index of class, class label name string]
     # convert OH to index of class
-    y_cls = [np.argmax(one) for one in y] if len(np.array(y).shape) == 2 else y
+    y_cls = flatten_y_if_onehot(y)
     # y_cls can be one of [index of class, class label name]
     classset = sorted(list(set(y_cls)))
     sample_distribution = {cur_cls:len([one for one in y_cls if one == cur_cls]) for cur_cls in classset}
@@ -135,17 +142,28 @@ def get_class_distribution_list(y, num_classes):
             list_dist[i] = dist[i]
     return list_dist
 
-from imblearn.over_sampling import RandomOverSampler
-def balance_class_by_over_sampling(X, y):
+def _balance_class(X, y, min_or_max, sampler_class, random_state):
+    """Balance class distribution with sampler_class."""
+    y = flatten_y_if_onehot(y)
+    distribution = get_class_distribution(y)
+    classes = list(distribution.keys())
+    counts  = list(distribution.values())
+    nsamples = np.max(counts) if min_or_max == 'max' \
+          else np.min(counts)
+    flat_ratio = {cls:nsamples for cls in classes}
     Xidx = [[xidx] for xidx in range(len(X))]
-    y_cls = [np.argmax(one) for one in y]
-    classset = sorted(list(set(y_cls)))
-    sample_distribution = [len([one for one in y_cls if one == cur_cls]) for cur_cls in classset]
-    nsamples = np.max(sample_distribution)
-    flat_ratio = {cls:nsamples for cls in classset}
-    Xidx_resampled, y_cls_resampled = RandomOverSampler(ratio=flat_ratio, random_state=42).fit_sample(Xidx, y_cls)
+    sampler_instance = sampler_class(ratio=flat_ratio, random_state=random_state)
+    Xidx_resampled, y_cls_resampled = sampler_instance.fit_sample(Xidx, y)
     sampled_index = [idx[0] for idx in Xidx_resampled]
     return np.array([X[idx] for idx in sampled_index]), np.array([y[idx] for idx in sampled_index])
+
+def balance_class_by_over_sampling(X, y, random_state=42):
+    """Balance class distribution with imbalanced-learn RandomOverSampler."""
+    return  _balance_class(X, y, 'max', RandomOverSampler, random_state)
+
+def balance_class_by_under_sampling(X, y, random_state=42):
+    """Balance class distribution with imbalanced-learn RandomUnderSampler."""
+    return  _balance_class(X, y, 'min', RandomUnderSampler, random_state)
 
 def visualize_class_balance(title, y, labels):
     sample_dist_list = get_class_distribution_list(y, len(labels))
@@ -213,12 +231,14 @@ def get_cross_valid_fold(conf, fold, X, y):
 def balance_dataset(conf, X, y):
     # Balance distribution -> _Xtrain|_ytrain (overwritten)
     print_class_balance(' <Before> Current category distribution', y, conf.labels)
-    X, y = balance_class_by_over_sampling(X, y)
+    X, y = balance_class_by_over_sampling(X, y) if conf.balance_by_over_sampling \
+      else balance_class_by_under_sampling(X, y)
+
     print_class_balance(' <After> Balanced distribution', y, conf.labels)
     return X, y
 
 def calculate_acc_by_preds(y, preds):
-    targets = np.argmax(y, axis=1) if len(y.shape) == 2 else y
+    targets = flatten_y_if_onehot(y)
     results = np.argmax(preds, axis=1)
     acc = np.sum(targets == results) / len(targets)
     return acc
@@ -240,8 +260,8 @@ def evaluate_model(conf, model, plain_datagen, X, y):
         print('Ensemble Accuracy =', acc)
     return acc
 
-def train_model(conf, fold, dataset, model=None, init_weights=None,
-                image_data_generator=None):
+def train_classifier(conf, fold, dataset, model=None, init_weights=None,
+                     image_data_generator=None):
     # Split train/valid
     if len(dataset) == 2: # Auto train/valid split
         print('----- Fold #%d ----' % fold)

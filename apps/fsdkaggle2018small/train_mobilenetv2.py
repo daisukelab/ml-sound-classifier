@@ -4,8 +4,8 @@ import sys
 sys.path.append('../..')
 from lib_train import *
 
-conf.logdir = 'logs_mobilenetv2'
-conf.best_weight_file = 'best_mobilenetv2_weight.h5'
+conf.logdir = 'logs_mobilenetv2_small'
+conf.best_weight_file = 'best_mobilenetv2_small_weight.h5'
 
 # 1. Load Meta data
 DATAROOT = Path.home() / '.kaggle/competitions/freesound-audio-tagging'
