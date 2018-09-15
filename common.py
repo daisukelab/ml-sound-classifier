@@ -27,6 +27,13 @@ sys.path.insert(0, str(Path.cwd()))
 def is_handling_audio(conf):
     return 'sampling_rate' in conf
 
+def test_conf(conf):
+    if conf.model not in ['mobilenetv2', 'alexnet']:
+        raise Exception('conf.model not recognized: {}'.format(conf.model))
+    if conf.data_balancing not in ['over_sampling', 'under_sampling',
+                                        'by_generator', 'dont_balance']:
+        raise Exception('conf.data_balancing not recognized: {}'.format(conf.data_balancing))
+
 def auto_complete_conf(conf):
     if 'folder' in conf:
         conf.folder = Path(conf.folder)
@@ -49,7 +56,7 @@ def auto_complete_conf(conf):
     if 'logdir' not in conf:
         conf.logdir = 'logs'
     if 'data_balancing' not in conf:
-        conf.data_balancing = 'oversampling'
+        conf.data_balancing = 'over_sampling'
     if 'X_train' not in conf:
         conf.X_train = 'X_train.npy'
         conf.y_train = 'y_train.npy'

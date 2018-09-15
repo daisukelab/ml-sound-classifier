@@ -233,7 +233,7 @@ def get_steps_per_epoch(conf, _Xtrain, _Xvalid):
 def balance_dataset(conf, X, y):
     if conf.data_balancing == 'over_sampling' or conf.data_balancing == 'under_sampling':
         print_class_balance(' <Before> Current category distribution', y, conf.labels)
-        X, y = balance_class_by_over_sampling(X, y) if conf.balance_by_over_sampling \
+        X, y = balance_class_by_over_sampling(X, y) if conf.data_balancing == 'over_sampling' \
           else balance_class_by_under_sampling(X, y)
         print_class_balance(' <After> Balanced distribution', y, conf.labels)
     else:
@@ -244,9 +244,10 @@ def calculate_metrics(y_true, y_pred):
     """Calculate possible metrics."""
     y_true = np.argmax(y_true, axis=-1)
     y_pred = np.argmax(y_pred, axis=-1)
-    f1 = f1_score(y_true, y_pred)
-    recall = recall_score(y_true, y_pred)
-    precision = precision_score(y_true, y_pred)
+    average = 'weighted' if conf.num_classes > 2 else 'binary'
+    f1 = f1_score(y_true, y_pred, average=average)
+    recall = recall_score(y_true, y_pred, average=average)
+    precision = precision_score(y_true, y_pred, average=average)
     accuracy = accuracy_score(y_true, y_pred)
     return f1, recall, precision, accuracy
 
@@ -291,6 +292,8 @@ def evaluate_model(conf, model, X, y):
 
 def train_classifier(conf, fold, dataset, model=None, init_weights=None,
                      image_data_generator=None):
+    # Test configuration to make sure training properly
+    test_conf(conf)
     # Split train/valid
     if len(dataset) == 2: # Auto train/valid split
         print('----- Fold #%d ----' % fold)
