@@ -5,9 +5,11 @@
 
 This is a simple, fast, for live audio in realtime, customizable machine learning sound classifier.
 
-- MobileNetV2, light weight deep learning model, is trained by default.
-- Tensorflow graph for runtime fast prediction, and for portability.
-- Freesound Dataset Kaggle 2018 pre-built model is ready.
+- MobileNetV2; light weight CNN model for mobile is used.
+- (new) AlexNet based lighter/faster CNN model is also provided.
+- Tensorflow graph for runtime faster prediction, and for portability.
+- Freesound Dataset Kaggle 2018 pre-built models are ready.
+- (new) Raspberry Pi realtime inference supported.
 - Ensembling sequence of predictions (moving average) for stable results.
 - Normalizing samplewise for robustness to level drift.
 - Easy to customize example.
@@ -17,7 +19,9 @@ This project is a spin-off from my solution for a competition Kaggle ["Freesound
 The competition itself have provided dataset as usual, then all the work have done with dataset's static recorded samples.
 Unlike competition, this project is developed as working code/exsample to record live audio and classify in realtime.
 
-## Application Pull Requests/Reports are Welcome!
+(new) AlexNet based lighter model is also added and that makes it possible to run on Raspberry Pi.
+
+### Application Pull Requests/Reports are Welcome!
 
 If you implemented on your mobile app, or any embedded app like detecting sound of door open/close and make notification with Raspberry Pi, I really appreciate if you could let me know. Or you can pull-request your application, post as an issue here. You can also reach me via [twitter](https://twitter.com/nizumical).
 
@@ -25,12 +29,16 @@ If you implemented on your mobile app, or any embedded app like detecting sound 
 
 ### Requirements
 
+Install following modules.
+
 - Python 3.6.
 - Tensorflow, tested with 1.9.
 - Keras, tested with 2.2.0.
 - LibROSA, tested with 0.6.0.
 - PyAudio, tested with 0.2.11.
 - EasyDict, tested with 1.4.
+- Pandas, tested with 0.23.0.
+- Matplotlib, tested with 2.2.2.
 - imbalance.learn (For training only), tested with 0.3.3.
 - (some others, to be updated)
 
@@ -93,14 +101,19 @@ Check [Example Applications](EXAMPLE_APPS.md) when you try to train model for yo
 
 Following pretrained models are provided. 44.1kHz model is for high quality sound classification, and 16kHz model is for general purpose sounds.
 
-| File name                          | Dataset       | Audio input |
-|------------------------------------|---------------|-------------|
-| mobilenetv2_fsd2018_41cls.h5       | FSDKaggle2018 | 44.1kHz, 128 n_mels, 128 time hop |
-| mobilenetv2_small_fsd2018_41cls.h5 | FSDKaggle2018 | 16kHz, 64 n_mels, 64 time hop |
+| File name                          | Dataset       | Base Model | Audio input |
+|------------------------------------|---------------|-------------|-----|
+| mobilenetv2_fsd2018_41cls.h5       | FSDKaggle2018 | MobileNetV2 | 44.1kHz, 128 n_mels, 128 time hop |
+| mobilenetv2_small_fsd2018_41cls.h5 | FSDKaggle2018 | MobileNetV2 | 16kHz, 64 n_mels, 64 time hop |
+| alexbased_small_fsd2018_41cls.h5   | FSDKaggle2018 | AlexNet | 16kHz, 64 n_mels, 64 time hop |
 
-About 9,000 samples from FSDKaggle2018 are used for training. It means these models doesn't have generalization property like ones we can expect with ImageNet image classifier models.
+About 9,000 samples from FSDKaggle2018 are used for training. This number of samples 9,000 would not be enough to compare with ImageNet. So we cannot expect that these models have enough capability of representation, but it's still better than starting from scratch in small problems.
 
-## 4. Tuning example behaviors
+## 4. Raspberry Pi support
+
+See [RaspberryPi.md](RaspberryPi.md) for the detail.
+
+## 5. Tuning example behaviors
 
 Followings are important 3 parameters that you can fine-tune program behavior in your environment.
 
@@ -131,7 +144,7 @@ Ensemble is done by calclating geometric mean of all the predictions in the fifo
 
 For example, if `conf.pred_ensembles = 5`, past 4 predictions and present prediction will be used for calculating present ensemble prediction result.
 
-## 5. Possible future applications
+## 6. Possible future applications
 
 Following examples introduce possible impacts when you apply this kind of classifier in your applications.
 

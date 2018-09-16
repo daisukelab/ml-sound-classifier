@@ -280,7 +280,7 @@ def evaluate_model(conf, model, X, y):
     print('F1/Recall/Precision/Accuracy = {0:.4f}/{1:.4f}/{2:.4f}/{3:.4f}' \
           .format(f1, recall, precision, acc))
     # Calculate ensemble accuracy
-    if conf.samples_per_file > 1:
+    if conf.samples_per_file > 1 and conf.eval_ensemble:
         sample_preds_list = np.array([preds[i::conf.samples_per_file]
                                       for i in range(conf.samples_per_file)])
         one_y = y[::conf.samples_per_file]

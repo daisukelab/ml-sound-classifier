@@ -66,6 +66,10 @@ def auto_complete_conf(conf):
         conf.steps_per_epoch_limit = None
     if 'samples_per_file' not in conf:
         conf.samples_per_file = 1
+    if 'eval_ensemble' not in conf:
+        conf.eval_ensemble = True # Set False if samples_per_file > 1 but ensemble is not available
+    if 'what_is_sample' not in conf:
+        conf.what_is_sample = 'log mel-spectrogram'
 
 from config import *
 auto_complete_conf(conf)

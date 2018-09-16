@@ -31,6 +31,7 @@ conf.learning_rate = 0.0001
 conf.epochs = 50
 conf.verbose = 2
 conf.best_weight_file = 'best_model_weight.h5'
+conf.eval_ensemble = False # This solution shuffles samples, ensemble not available
 
 # Runtime conficurations
 conf.rt_process_count = 1

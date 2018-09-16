@@ -1,8 +1,17 @@
-# Example Applications
+# Example Applications and Training
 
 `apps` folder has some example applications which explains entire process to work with your dataset.
 
-## FSDKaggle2018
+## Install Before Start Training
+
+Run followings to download python modules for using training.
+
+```sh
+cd ext
+./download.sh
+```
+
+## A. FSDKaggle2018
 
 This trains a model for Freesound Dataset Kaggle 2018 dataset.
 
@@ -28,7 +37,7 @@ Running this will convert trained model to Tensorflow .pb file.
 
 - `FSDKaggle2018-TF-Model-Coversion.ipynb`
 
-## FSDKaggle2018small
+## B. FSDKaggle2018small
 
 This trains a model for handing smaller audio data. Model is not small but audio, FS is 16 kHz for example.　This sample is less computationally expensive for audio processing.
 
@@ -49,7 +58,7 @@ cd apps/fsdkaggle2018/alexnet
 python train.py
 ```
 
-## CNN Laser Machine Listener
+## C. CNN Laser Machine Listener
 
 This is a experimental application example to [github/Laser Machine Listener](https://github.com/kotobuki/laser-machine-listener).
 Classification problem of sounds in hardware laboratory.
@@ -78,3 +87,11 @@ This example has three notebooks to make it work.
     ```
 
 `cnn-model-laser-machine-listener.pb` is ready in this repository for your quick try.
+
+### C.1 Another attempt for CNN Laser Machine Listener
+
+AlexNet based model is also applied to this problem. It not only shows the better result, but also runs much faster.
+
+- `CNN-LML-Another-Attempt-AlexNetBased.ipynb` is the notebook that shows how to train, and visualization of results.
+- `cnn-alexbased-laser-machine-listener.pb` is also ready for your quick try.
+
