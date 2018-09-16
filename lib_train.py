@@ -240,7 +240,7 @@ def balance_dataset(conf, X, y):
         print(' Dataset is not balanced so far, conf.data_balancing =', conf.data_balancing)
     return X, y
 
-def calculate_metrics(y_true, y_pred):
+def calculate_metrics(conf, y_true, y_pred):
     """Calculate possible metrics."""
     y_true = np.argmax(y_true, axis=-1)
     y_pred = np.argmax(y_pred, axis=-1)
@@ -276,7 +276,7 @@ def evaluate_model(conf, model, X, y):
     test_generator = ImageDataGenerator().flow(X, y, batch_size=conf.batch_size, shuffle=False)
     preds = model.predict_generator(test_generator)
     # Calculate metrics
-    f1, recall, precision, acc = calculate_metrics(y, preds)
+    f1, recall, precision, acc = calculate_metrics(conf, y, preds)
     print('F1/Recall/Precision/Accuracy = {0:.4f}/{1:.4f}/{2:.4f}/{3:.4f}' \
           .format(f1, recall, precision, acc))
     # Calculate ensemble accuracy
@@ -285,7 +285,7 @@ def evaluate_model(conf, model, X, y):
                                       for i in range(conf.samples_per_file)])
         one_y = y[::conf.samples_per_file]
         ensemble_preds = geometric_mean_preds(sample_preds_list)
-        f1, recall, precision, acc = calculate_metrics(one_y, preds)
+        f1, recall, precision, acc = calculate_metrics(conf, one_y, ensemble_preds)
         print('Ensemble F1/Recall/Precision/Accuracy = {0:.4f}/{1:.4f}/{2:.4f}/{3:.4f}' \
               .format(f1, recall, precision, acc))
     return f1, recall, precision, acc
