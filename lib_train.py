@@ -126,7 +126,7 @@ def load_datafiles(conf, X_file, y_file=None, normalize=True):
         y = keras.utils.to_categorical(load_npy(conf, y_file))
     if normalize:
         print(' normalize samplewise')
-        samplewise_normalize_audio_X(X)
+        samplewise_normalize_X(X)
     return X, y if y_file is not None else X
 
 # # Data Distribution Utilities
