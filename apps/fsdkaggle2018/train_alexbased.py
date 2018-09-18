@@ -32,8 +32,8 @@ def fsdkaggle2018_make_preprocessed_train_data():
 fsdkaggle2018_make_preprocessed_train_data()
 
 # 3. Load all dataset & normalize
-X_train, y_train = load_dataset(conf, conf.X_train, conf.y_train, normalize=True)
-X_test, y_test = load_dataset(conf, conf.X_test, conf.y_test, normalize=True)
+X_train, y_train = load_audio_datafiles(conf, conf.X_train, conf.y_train, normalize=True)
+X_test, y_test = load_audio_datafiles(conf, conf.X_test, conf.y_test, normalize=True)
 print('Loaded train:test = {}:{} samples.'.format(len(X_train), len(X_test)))
 
 # 4. Train folds

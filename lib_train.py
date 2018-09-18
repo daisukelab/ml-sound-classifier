@@ -108,7 +108,7 @@ def train_valid_split_multiplexed(conf, XX, y, demux=True, delta_random_state=0)
     # train/valid are ready
     return X_or_XX_train, y_train, X_or_XX_valid, y_valid
 
-def load_dataset(conf, X_or_XX_file, y_file, normalize):
+def load_audio_datafiles(conf, X_or_XX_file, y_file, normalize):
     X_or_XX, y = load_npy(conf, X_or_XX_file), \
                  keras.utils.to_categorical(load_npy(conf, y_file))
     if normalize:
@@ -119,6 +119,15 @@ def load_dataset(conf, X_or_XX_file, y_file, normalize):
         else:
             samplewise_normalize_audio_X(X_or_XX) # it is X
     return X_or_XX, y
+
+def load_datafiles(conf, X_file, y_file=None, normalize=True):
+    X = load_npy(conf, X_file)
+    if y_file is not None:
+        y = keras.utils.to_categorical(load_npy(conf, y_file))
+    if normalize:
+        print(' normalize samplewise')
+        samplewise_normalize_audio_X(X)
+    return X, y if y_file is not None else X
 
 # # Data Distribution Utilities
 def flatten_y_if_onehot(y):
