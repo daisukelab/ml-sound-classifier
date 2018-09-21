@@ -127,7 +127,7 @@ def load_datafiles(conf, X_file, y_file=None, normalize=True):
     if normalize:
         print(' normalize samplewise')
         samplewise_normalize_X(X)
-    return X, y if y_file is not None else X
+    return (X, y) if y_file is not None else X
 
 # # Data Distribution Utilities
 def flatten_y_if_onehot(y):
@@ -220,7 +220,7 @@ def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid,
     mixup_class = MixupGenerator if conf.data_balancing != 'by_generator' \
                   else BalancedMixupGenerator
     train_generator = mixup_class(_Xtrain, _ytrain, 
-                                  alpha=1.0, batch_size=conf.batch_size,
+                                  alpha=conf.aug_mixup_alpha, batch_size=conf.batch_size,
                                   datagen=aug_datagen)()
     valid_generator = plain_datagen.flow(_Xvalid, _yvalid,
                                          batch_size=conf.batch_size, shuffle=False)

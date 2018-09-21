@@ -64,6 +64,8 @@ def auto_complete_conf(conf):
         conf.y_test  = 'y_test.npy'
     if 'steps_per_epoch_limit' not in conf:
         conf.steps_per_epoch_limit = None
+    if 'aug_mixup_alpha' not in conf:
+        conf.aug_mixup_alpha = 1.0
     if 'samples_per_file' not in conf:
         conf.samples_per_file = 1
     if 'eval_ensemble' not in conf:
