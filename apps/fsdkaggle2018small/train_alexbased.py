@@ -37,11 +37,11 @@ X_test, y_test = load_audio_datafiles(conf, conf.X_test, conf.y_test, normalize=
 print('Loaded train:test = {}:{} samples.'.format(len(X_train), len(X_test)))
 
 # 4. Train folds
-history, model, plain_datagen = train_classifier(conf, fold=0,
-                                                 dataset=[X_train, y_train, X_test, y_test],
-                                                 model=None,
-                                                 init_weights=None, # from scratch
-                                                 #init_weights='../../model/mobilenetv2_small_fsd2018_41cls.h5'
+history, model = train_classifier(conf, fold=0,
+                                  dataset=[X_train, y_train, X_test, y_test],
+                                  model=None,
+                                  init_weights=None, # from scratch
+                                  #init_weights='../../model/mobilenetv2_small_fsd2018_41cls.h5'
 )
 
 # 5. Evaluate

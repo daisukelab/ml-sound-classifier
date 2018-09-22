@@ -198,8 +198,7 @@ def print_class_balance(title, y, labels):
         print(' 0 sample classes:', zeroclasses)
 
 # # Training Functions
-def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid,
-                      image_data_generator=None):
+def create_train_generator(conf, _Xtrain, _ytrain, image_data_generator=None):
     # Create Keras ImageDataGenerator
     def print_generator_use(message):
         print(' {}{}'.format(message,
@@ -215,29 +214,22 @@ def create_generators(conf, _Xtrain, _ytrain, _Xvalid, _yvalid,
     else:
         aug_datagen = image_data_generator
         print_generator_use('Using Special data generator')
-    plain_datagen = ImageDataGenerator()
     # Create Generators
     mixup_class = MixupGenerator if conf.data_balancing != 'by_generator' \
                   else BalancedMixupGenerator
     train_generator = mixup_class(_Xtrain, _ytrain, 
                                   alpha=conf.aug_mixup_alpha, batch_size=conf.batch_size,
                                   datagen=aug_datagen)()
-    valid_generator = plain_datagen.flow(_Xvalid, _yvalid,
-                                         batch_size=conf.batch_size, shuffle=False)
-    return train_generator, valid_generator, plain_datagen
+    return train_generator
 
-def get_steps_per_epoch(conf, _Xtrain, _Xvalid):
-    train_steps_per_epoch = len(_Xtrain) // conf.batch_size
-    valid_steps_per_epoch = len(_Xvalid) // conf.batch_size
+def get_steps_per_epoch(conf, _Xtrain):
+    train_steps_per_epoch = (len(_Xtrain) + conf.batch_size - 1) // conf.batch_size
     if conf.steps_per_epoch_limit is not None:
         train_steps_per_epoch = np.clip(train_steps_per_epoch, train_steps_per_epoch,
                                         conf.steps_per_epoch_limit)
-        valid_steps_per_epoch = np.clip(valid_steps_per_epoch, valid_steps_per_epoch,
-                                        conf.steps_per_epoch_limit)
     if conf.verbose > 0:
-        print(' train_steps_per_epoch, valid_steps_per_epoch = {}, {}' \
-              .format(train_steps_per_epoch, valid_steps_per_epoch))
-    return train_steps_per_epoch, valid_steps_per_epoch
+        print(' train_steps_per_epoch, {}'.format(train_steps_per_epoch))
+    return train_steps_per_epoch
 
 def balance_dataset(conf, X, y):
     if conf.data_balancing == 'over_sampling' or conf.data_balancing == 'under_sampling':
@@ -282,8 +274,7 @@ def summarize_metrics_history(metrics_history, show_graph=True):
 
 def evaluate_model(conf, model, X, y):
     # Predict
-    test_generator = ImageDataGenerator().flow(X, y, batch_size=conf.batch_size, shuffle=False)
-    preds = model.predict_generator(test_generator)
+    preds = model.predict(X)
     # Calculate metrics
     f1, recall, precision, acc = calculate_metrics(conf, y, preds)
     print('F1/Recall/Precision/Accuracy = {0:.4f}/{1:.4f}/{2:.4f}/{3:.4f}' \
@@ -319,10 +310,8 @@ def train_classifier(conf, fold, dataset, model=None, init_weights=None,
     Xtrain, ytrain = balance_dataset(conf, Xtrain, ytrain)
 
     # Get generators, steps, callbacks, and model
-    train_generator, valid_generator, plain_datagen = \
-        create_generators(conf, Xtrain, ytrain, Xvalid, yvalid, image_data_generator)
-    train_steps_per_epoch, valid_steps_per_epoch = \
-        get_steps_per_epoch(conf, Xtrain, Xvalid)
+    train_generator = create_train_generator(conf, Xtrain, ytrain, image_data_generator)
+    train_steps_per_epoch = get_steps_per_epoch(conf, Xtrain)
     callbacks = [
         ModelCheckpoint(str(datapath(conf, conf.best_weight_file)),
                         monitor=conf.metric_save_ckpt, mode=conf.metric_save_mode,
@@ -336,10 +325,9 @@ def train_classifier(conf, fold, dataset, model=None, init_weights=None,
     history = model.fit_generator(train_generator,
                     steps_per_epoch=train_steps_per_epoch,
                     epochs=conf.epochs,
-                    validation_data=valid_generator, 
-                    validation_steps=valid_steps_per_epoch,
+                    validation_data=(Xvalid, yvalid),
                     callbacks=callbacks,
                     verbose=conf.verbose)
     # Load best weight
     model.load_weights(datapath(conf, conf.best_weight_file))
-    return history, model, plain_datagen
+    return history, model
