@@ -132,7 +132,7 @@ def load_datafiles(conf, X_file, y_file=None, normalize=True):
 # # Data Distribution Utilities
 def flatten_y_if_onehot(y):
     """De-one-hot y, i.e. [0,1,0,0,...] to 1 for all y."""
-    return y if len(np.array(y).shape) == 1 else [np.argmax(one) for one in y]
+    return y if len(np.array(y).shape) == 1 else np.argmax(y, axis = -1)
 
 def get_class_distribution(y):
     """Calculate number of samples per class."""
@@ -243,8 +243,8 @@ def balance_dataset(conf, X, y):
 
 def calculate_metrics(conf, y_true, y_pred):
     """Calculate possible metrics."""
-    y_true = np.argmax(y_true, axis=-1)
-    y_pred = np.argmax(y_pred, axis=-1)
+    y_true = flatten_y_if_onehot(y_true)
+    y_pred = flatten_y_if_onehot(y_pred)
     average = 'weighted' if conf.num_classes > 2 else 'binary'
     f1 = f1_score(y_true, y_pred, average=average)
     recall = recall_score(y_true, y_pred, average=average)
