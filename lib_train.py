@@ -11,6 +11,7 @@ import os
 from ext.random_eraser import get_random_eraser
 from ext.mixup_generator import MixupGenerator
 from ext.balanced_mixup_generator import BalancedMixupGenerator
+from ext.clr_callback import CyclicLR
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
 import keras
@@ -252,6 +253,17 @@ def calculate_metrics(conf, y_true, y_pred):
     accuracy = accuracy_score(y_true, y_pred)
     return f1, recall, precision, accuracy
 
+def print_metrics(conf, y_true, y_pred, binary_bias=None, title_prefix=''):
+    # Add bias if binary_bias is set
+    _preds = y_pred.copy()
+    if binary_bias:
+        _preds[:, 0] *= 1+binary_bias
+        _preds[:, 1] *= 1-binary_bias
+    # Calculate metrics
+    f1, recall, precision, acc = calculate_metrics(conf, y_true, _preds)
+    print('{0:s}F1/Recall/Precision/Accuracy = {1:.4f}/{2:.4f}/{3:.4f}/{4:.4f}' \
+          .format(title_prefix, f1, recall, precision, acc))
+
 def summarize_metrics_history(metrics_history, show_graph=True):
     """Summarize history of metrics."""
     metrics_history = np.array(metrics_history)
@@ -317,6 +329,8 @@ def train_classifier(conf, fold, dataset, model=None, init_weights=None,
                         monitor=conf.metric_save_ckpt, mode=conf.metric_save_mode,
                         verbose=1 if conf.verbose > 0 else 0,
                         save_best_only=True, save_weights_only=True),
+        CyclicLR(base_lr=conf.learning_rate / 10.0, max_lr=conf.learning_rate,
+                 step_size=train_steps_per_epoch, mode='triangular'),
         TensorBoard(log_dir=str(datapath(conf, 'logs/fold_%d' % fold)), write_graph=True)
     ]
     if model is None:
