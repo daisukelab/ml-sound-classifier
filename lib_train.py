@@ -253,12 +253,18 @@ def calculate_metrics(conf, y_true, y_pred):
     accuracy = accuracy_score(y_true, y_pred)
     return f1, recall, precision, accuracy
 
+def skew_preds(y_pred, binary_bias=None):
+    _preds = y_pred.copy()
+    if binary_bias is not None:
+        ps = np.power(_preds[:, 1], binary_bias)
+        _preds[:, 1] = ps
+        _preds[:, 0] = 1 - ps
+        print(' @skew', binary_bias)
+    return _preds
+
 def print_metrics(conf, y_true, y_pred, binary_bias=None, title_prefix=''):
     # Add bias if binary_bias is set
-    _preds = y_pred.copy()
-    if binary_bias:
-        _preds[:, 0] *= 1+binary_bias
-        _preds[:, 1] *= 1-binary_bias
+    _preds = skew_preds(y_pred, binary_bias)
     # Calculate metrics
     f1, recall, precision, acc = calculate_metrics(conf, y_true, _preds)
     print('{0:s}F1/Recall/Precision/Accuracy = {1:.4f}/{2:.4f}/{3:.4f}/{4:.4f}' \
