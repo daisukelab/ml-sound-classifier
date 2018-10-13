@@ -26,8 +26,6 @@ sys.path.insert(0, str(Path.cwd()))
 # # Configration
 def is_handling_audio(conf):
     return 'sampling_rate' in conf
-def is_training_enalbed(conf):
-    return conf.enable_training
 
 def test_conf(conf):
     if conf.model not in ['mobilenetv2', 'alexnet']:
@@ -74,8 +72,8 @@ def auto_complete_conf(conf):
         conf.eval_ensemble = True # Set False if samples_per_file > 1 but ensemble is not available
     if 'what_is_sample' not in conf:
         conf.what_is_sample = 'log mel-spectrogram'
-    if 'enable_training' not in conf:
-        conf.enable_training = True
+    if 'use_audio_training_model' not in conf:
+        conf.use_audio_training_model = True
 
 from config import *
 auto_complete_conf(conf)
@@ -94,8 +92,8 @@ def load_npy(conf, filename):
     return np.load(conf.folder / filename)
 
 # # Model
-if is_training_enalbed(conf):
-    from model import create_model, freeze_model_layers
+if conf.use_audio_training_model:
+    from sound_models import create_model, freeze_model_layers
 
 # # Audio Utilities
 import librosa
