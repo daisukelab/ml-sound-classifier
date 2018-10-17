@@ -232,7 +232,7 @@ class KerasTFGraph:
     def close(self):
         self.sess.close()
 
-def get_model(conf, graph_file):
+def load_keras_tf_graph(conf, graph_file):
     model_node = {
         'alexnet': ['import/conv2d_1_input',
                     'import/batch_normalization_1/keras_learning_phase',
