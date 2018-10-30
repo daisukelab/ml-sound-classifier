@@ -351,3 +351,47 @@ def train_classifier(conf, fold, dataset, model=None, init_weights=None,
     # Load best weight
     model.load_weights(datapath(conf, conf.best_weight_file))
     return history, model
+
+## More visualization
+
+# Thanks to http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
+import itertools
+from sklearn.metrics import confusion_matrix
+
+def plot_confusion_matrix(y_test, y_pred, classes,
+                          normalize=True,
+                          title=None,
+                          cmap=plt.cm.Blues):
+    """Plot confusion matrix.
+    """
+    po = np.get_printoptions()
+    np.set_printoptions(precision=2)
+    
+    y_test = flatten_y_if_onehot(y_test)
+    y_pred = flatten_y_if_onehot(y_pred)
+    cm = confusion_matrix(y_test, y_pred)
+
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        if title is None: title = 'Normalized confusion matrix'
+    else:
+        if title is None: title = 'Confusion matrix (not normalized)'
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.tight_layout()
+    np.set_printoptions(**po)
